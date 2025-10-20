@@ -12,7 +12,7 @@ We are all Master of Data Science students at the University of California Irvin
 **LinkedIn:** [https://www.linkedin.com/in/timothy-ng-data/](https://www.linkedin.com/in/timothy-ng-data/)
 
 
-### ![Ziwen Zhai](![ziwen](https://github.com/user-attachments/assets/b4ac1caa-f955-4916-a2f7-51bc2161edd0) ###
+### ![ziwen](https://github.com/user-attachments/assets/0c091c52-1acc-4e71-adfb-0e335aa37156) ###
 **Name:** Ziwen Zhai
 **Undergraduate Experience:** Data Analytics @ Washington State University  
 **About Me:** I enjoy playing basketball and soccer — sports keep me active and energized. I'm also a big fan of rock music, especially Linkin Park.  
