@@ -17,3 +17,9 @@ We are all Master of Data Science students at the University of California Irvin
 **Undergraduate Experience:** Data Analytics @ Washington State University  
 **About Me:** I enjoy playing basketball and soccer — sports keep me active and energized. I'm also a big fan of rock music, especially Linkin Park.  
 **LinkedIn:** www.linkedin.com/in/ziwen-zhai
+
+
+**Name:** Indrajeet Patwardhan  
+**Undergraduate Experience:** Computer Science @ California State University, Fullerton  
+**About Me:** I enjoy going to the gym and playing pickleball. I have been practicing martial arts for the last 10 years, and I like listening to EDM. 
+**LinkedIn:** [https://www.linkedin.com/in/indrajeet-patwardhan-163b08211/](https://www.linkedin.com/in/indrajeet-patwardhan-163b08211/)
