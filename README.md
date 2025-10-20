@@ -13,7 +13,7 @@ We are all Master of Data Science students at the University of California Irvin
 
 
 ### ![ziwen](https://github.com/user-attachments/assets/0c091c52-1acc-4e71-adfb-0e335aa37156) ###
-**Name:** Ziwen Zhai
+**Name:** Ziwen Zhai  
 **Undergraduate Experience:** Data Analytics @ Washington State University  
 **About Me:** I enjoy playing basketball and soccer — sports keep me active and energized. I'm also a big fan of rock music, especially Linkin Park.  
-**LinkedIn:** [www.linkedin.com/in/ziwen-zhai].
+**LinkedIn:** www.linkedin.com/in/ziwen-zhai
