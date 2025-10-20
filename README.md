@@ -10,3 +10,10 @@ We are all Master of Data Science students at the University of California Irvin
 **Undergraduate Experience:** Math @ University of California, Davis  
 **About Me:** I love making coffee and cooking! I try to make latte art every morning, and I've been writing a recipe book that currently has over 35 recipes.  
 **LinkedIn:** [https://www.linkedin.com/in/timothy-ng-data/](https://www.linkedin.com/in/timothy-ng-data/)
+
+
+### ![Ziwen Zhai]([https://media.licdn.com/dms/image/v2/C5603AQFJc2fZzS1gEQ/profile-displayphoto-shrink_200_200/profile-displayphoto-shrink_200_200/0/1662760328894?e=1762387200&v=beta&t=6bm-utJ2WrblYD-5TOkq2UjQ3yeGBxKwYLtjZ0zd4is](https://media.licdn.com/dms/image/v2/D4E03AQE-FsC0_gIhEg/profile-displayphoto-crop_800_800/B4EZn_iIoYJ0AI-/0/1760928763126?e=1762387200&v=beta&t=bZDQNX-ndghpveFSWgRWF1HEZGSXyNSpxi0nkpCQK30)) ###
+**Name:** Ziwen Zhai
+**Undergraduate Experience:** Data Analytics @ Washington State University  
+**About Me:** I enjoy playing basketball and soccer — sports keep me active and energized. I'm also a big fan of rock music, especially Linkin Park.  
+**LinkedIn:** [www.linkedin.com/in/ziwen-zhai].
