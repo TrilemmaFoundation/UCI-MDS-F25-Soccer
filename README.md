@@ -21,12 +21,12 @@ We are all Master of Data Science students at the University of California Irvin
 
 **Name:** Indrajeet Patwardhan  
 **Undergraduate Experience:** Computer Science @ California State University, Fullerton  
-**About Me:** I enjoy going to the gym and playing pickleball. I have been practicing martial arts for the last 10 years, and I like listening to EDM. 
+**About Me:** I enjoy going to the gym and playing pickleball. I have been practicing martial arts for the last 10 years, and I like listening to EDM.  
 **LinkedIn:** [https://www.linkedin.com/in/indrajeet-patwardhan-163b08211/](https://www.linkedin.com/in/indrajeet-patwardhan-163b08211/)
 
 
 **Name:** Bryan Torres  
 **Undergraduate Experience:** Applied Math @ Cal Poly, Pomona  
-**About Me:** I like to exercise and go on walks with my dogs. 
+**About Me:** I like to exercise and go on walks with my dogs.  
 **LinkedIn:** [https://www.linkedin.com/in/bryantorres-okok/](https://www.linkedin.com/in/bryantorres-okok/)
 

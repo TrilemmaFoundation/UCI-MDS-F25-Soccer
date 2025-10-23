@@ -1,0 +1,8 @@
+# not uploading the data files
+statsbomb/
+
+# note uploading the virtual environment
+venv/
+
+# ignore vim temporary files
+*~
