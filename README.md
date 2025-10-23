@@ -31,7 +31,7 @@ We are all Master of Data Science students at the University of California Irvin
 **LinkedIn:** [https://www.linkedin.com/in/bryantorres-okok/](https://www.linkedin.com/in/bryantorres-okok/)
 
 
-**Name:** Yue Xu 
+**Name:** Yue Xu  
 **Undergraduate Experience:** Information System @ NUAA  
-**About Me:** I like to watch movies and play games. 
+**About Me:** I like to watch movies and play games.  
 **LinkedIn:** [https://www.linkedin.com/in/yuexu4541/](https://www.linkedin.com/in/yuexu4541/)
