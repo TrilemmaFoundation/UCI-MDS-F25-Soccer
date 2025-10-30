@@ -1,8 +1,15 @@
-# not uploading the data files
+# Ignore local data files
 statsbomb/
+/data/
+/output
 
-# note uploading the virtual environment
+# Ignore virtual environments
 venv/
+.venv/
 
-# ignore vim temporary files
+# Ignore editor and OS temp files
 *~
+.DS_Store
+
+# Ignore Python temp files
+__pycache__/
