@@ -7,7 +7,8 @@ import numpy as np
 # ------------------------------
 # 1. Database Connection
 # ------------------------------
-DB_PATH = "/Users/indrajeet/Documents/Compsci 296p/UCI-MDS-F25-Soccer/statsbomb_euro2020.db"
+DB_PATH = r"C:\Users\Bryan\CodeProjects\D296P-297P\UCI-MDS-F25-Soccer\statsbomb_euro2020.db"
+#DB_PATH = "/Users/indrajeet/Documents/Compsci 296p/UCI-MDS-F25-Soccer/statsbomb_euro2020.db"
 
 # ------------------------------
 # Cached Database Queries
@@ -101,7 +102,8 @@ if selected_team and selected_match:
 
         # Background field image (optional)
         try:
-            img = plt.imread("soccer-field.jpg")
+            img = plt.imread(r"C:\Users\Bryan\CodeProjects\D296P-297P\UCI-MDS-F25-Soccer\imgs\soccer-field.jpg")
+            #img = plt.imread("/Users/indrajeet/Documents/Compsci 296p/UCI-MDS-F25-Soccer/imgs")
             has_field_image = True
         except FileNotFoundError:
             img = None
@@ -127,3 +129,9 @@ if selected_team and selected_match:
     plot_heatmap(df_events, "Shot", f"{selected_team} — Shot Heatmap")
     plot_heatmap(df_events, "Pass", f"{selected_team} — Pass Heatmap")
     plot_heatmap(df_events, "Ball Receipt", f"{selected_team} — Receive Heatmap")
+
+    # ------------------------------
+    # Add scoreboard to 5 min intervals to get a better analysis
+    # Map imgs with country flags
+    # Ask about xG numbers
+    # Add simple statistics
