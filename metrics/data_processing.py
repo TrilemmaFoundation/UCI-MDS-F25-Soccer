@@ -171,7 +171,86 @@ def statsbomb_load_league(league_json_file: str, out_csv: str = "", out_dir: str
     return df
 
 
+def statsbomb_load_league_xt_full(
+    league_json_file: str, out_jsonl: str = "", out_dir: str = ""
+):
+    with open(
+        os.path.join(STATSBOMB_DIR, "data/matches/", league_json_file),
+        "r",
+        encoding="utf-8",
+    ) as f:
+        matches = json.load(f)
+
+    match_ids = [match["match_id"] for match in matches]
+    events_filepath = [
+        os.path.join(os.path.join(STATSBOMB_DIR, "data/events"), f"{match_id}.json")
+        for match_id in match_ids
+    ]
+
+    all_events = []
+    for events in events_filepath:
+        with open(events, "r") as f:
+            for event in json.load(f):
+                if event["type"]["name"] in ["Pass", "Carry", "Shot"]:
+                    all_events.append(event)
+
+    if out_jsonl:
+        os.makedirs(out_dir, exist_ok=True)
+        with open(os.path.join(out_dir, out_jsonl), "w") as f:
+            for event in all_events:
+                f.write(json.dumps(event) + "\n")
+
+    return all_events
+
+
+def statsbomb_load_league_xt(
+    league_json_file: str, out_jsonl: str = "", out_dir: str = ""
+):
+    matches_path = os.path.join(STATSBOMB_DIR, "data/matches", league_json_file)
+    with open(matches_path, "r", encoding="utf-8") as f:
+        matches = json.load(f)
+
+    match_ids = [m["match_id"] for m in matches]
+    event_files = [
+        os.path.join(STATSBOMB_DIR, "data/events", f"{mid}.json") for mid in match_ids
+    ]
+
+    all_events = []
+    for ef in event_files:
+        with open(ef, "r", encoding="utf-8") as f:
+            events = json.load(f)
+        for e in events:
+            t = e["type"]["name"]
+            if t not in ("Pass", "Carry", "Shot"):
+                continue
+
+            small = {
+                "type": t,
+                "location": e.get("location"),
+            }
+            if t == "Pass":
+                small["end_location"] = e.get("pass", {}).get("end_location")
+            elif t == "Carry":
+                small["end_location"] = e.get("carry", {}).get("end_location")
+            elif t == "Shot":
+                small["xg"] = e.get("shot", {}).get("statsbomb_xg", 0.0)
+
+            all_events.append(small)
+
+        del events
+
+    if out_jsonl:
+        os.makedirs(out_dir, exist_ok=True)
+        path = os.path.join(out_dir, out_jsonl)
+        with open(path, "w", encoding="utf-8") as f:
+            for event in all_events:
+                f.write(json.dumps(event) + "\n")
+
+    return all_events
+
+
 if __name__ == "__main__":
+    # xg
     # Germany league 2023/2024
     statsbomb_load_league(
         "9/281.json",
@@ -198,4 +277,21 @@ if __name__ == "__main__":
     df_shots = extract_shots_from_db("data/statsbomb_euro2020.db")
     df_shots.to_csv(
         "output/shots_training_data_uefa.csv", index=False, encoding="utf-8-sig"
+    )
+    # xt
+    # Germany league 2023/2024
+    statsbomb_load_league_xt(
+        "9/281.json", out_jsonl="Germany_xt.jsonl", out_dir="output"
+    )
+    # France league 2022/2023
+    statsbomb_load_league_xt(
+        "7/235.json", out_jsonl="France_xt.jsonl", out_dir="output"
+    )
+    # Spain league 2020/2021
+    statsbomb_load_league_xt("11/90.json", out_jsonl="Spain_xt.jsonl", out_dir="output")
+    # Italy league 2015/2016
+    statsbomb_load_league_xt("12/27.json", out_jsonl="Italy_xt.jsonl", out_dir="output")
+    # England league 2015/2016
+    statsbomb_load_league_xt(
+        "2/27.json", out_jsonl="England_xt.jsonl", out_dir="output"
     )
