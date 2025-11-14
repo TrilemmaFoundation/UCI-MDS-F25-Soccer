@@ -19,19 +19,18 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Dark Mode CSS Styling
+# Custom CSS Styling
 st.markdown("""
     <style>
-    /* Dark Mode Styles */
     .main-header {
         font-size: 3rem;
         font-weight: bold;
-        color: #64b5f6;
+        color: #1f77b4;
         text-align: center;
         margin-bottom: 2rem;
     }
     .metric-card {
-        background-color: #1e1e1e;
+        background-color: #f0f2f6;
         padding: 1rem;
         border-radius: 0.5rem;
         text-align: center;
@@ -43,27 +42,15 @@ st.markdown("""
         font-size: 1.1rem;
         font-weight: 600;
     }
-    .stApp {
-        background-color: #0e1117;
-    }
-    [data-testid="stSidebar"] {
-        background-color: #262730;
-    }
-    .stDataFrame {
-        background-color: #1e1e1e;
-    }
-    [data-testid="stMetricValue"] {
-        color: #ffffff;
-    }
     .definition-box {
-        background-color: #1e1e1e;
+        background-color: #f0f2f6;
         padding: 1.5rem;
         border-radius: 0.5rem;
-        border-left: 4px solid #64b5f6;
+        border-left: 4px solid #1f77b4;
         margin-bottom: 1rem;
     }
     .feature-box {
-        background-color: #262730;
+        background-color: #e8eaf6;
         padding: 1rem;
         border-radius: 0.5rem;
         margin-bottom: 0.5rem;
@@ -76,7 +63,7 @@ st.markdown("""
 # ------------------------------
 DB_PATH = "/Users/indrajeet/Documents/Compsci 296p/UCI-MDS-F25-Soccer/statsbomb_euro2020.db"
 FLAGS_PATH = "/Users/indrajeet/Documents/Compsci 296p/UCI-MDS-F25-Soccer/imgs"
-FIELD_IMAGE_PATH = "/Users/indrajeet/Documents/Compsci 296p/UCI-MDS-F25-Soccer/soccer-field.jpg"
+FIELD_IMAGE_PATH = "/Users/indrajeet/Documents/Compsci 296p/UCI-MDS-F25-Soccer/imgs/soccer-field.jpg"
 
 # ------------------------------
 # Country to Flag Mapping
@@ -265,7 +252,7 @@ def display_team_header(team_name):
         st.markdown(f"### {team_name}")
 
 def plot_heatmap(df, event_type, title):
-    """Matplotlib heatmap overlaid on soccer field image (dark mode)"""
+    """Matplotlib heatmap overlaid on soccer field image"""
     event_df = df[df["type"].str.contains(event_type, case=False, na=False)].copy()
 
     if event_df.empty:
@@ -291,14 +278,12 @@ def plot_heatmap(df, event_type, title):
         st.warning(f"No valid location data for {event_type}")
         return
 
-    plt.style.use('dark_background')
-    fig, ax = plt.subplots(figsize=(6, 4), facecolor='#0e1117')
-    ax.set_facecolor('#0e1117')
+    fig, ax = plt.subplots(figsize=(6, 4))
     
     if os.path.exists(FIELD_IMAGE_PATH):
         try:
             img = plt.imread(FIELD_IMAGE_PATH)
-            ax.imshow(img, extent=[0, 120, 0, 80], aspect='auto', alpha=0.3)
+            ax.imshow(img, extent=[0, 120, 0, 80], aspect='auto', alpha=0.5)
         except Exception as e:
             print(f"Error loading field image: {e}")
     
@@ -316,12 +301,12 @@ def plot_heatmap(df, event_type, title):
     
     ax.set_xticks([])
     ax.set_yticks([])
-    ax.set_title(title, fontsize=11, fontweight='bold', color='white')
+    ax.set_title(title, fontsize=11, fontweight='bold')
     st.pyplot(fig)
     plt.close()
 
 def plot_interactive_shot_map(df_shots, team_name):
-    """Interactive shot map with xG values on hover using Plotly (dark mode)"""
+    """Interactive shot map with xG values on hover using Plotly"""
     team_shots = df_shots[df_shots["team"] == team_name].copy()
     
     if team_shots.empty:
@@ -366,7 +351,7 @@ def plot_interactive_shot_map(df_shots, team_name):
                     sizex=120,
                     sizey=80,
                     sizing="stretch",
-                    opacity=0.3,
+                    opacity=0.5,
                     layer="below"
                 )
             )
@@ -383,7 +368,7 @@ def plot_interactive_shot_map(df_shots, team_name):
             colorscale='Reds',
             showscale=True,
             colorbar=dict(title="xG", thickness=15),
-            line=dict(width=1, color='white'),
+            line=dict(width=1, color='black'),
             opacity=0.8
         ),
         text=team_shots["hover_text"],
@@ -397,16 +382,15 @@ def plot_interactive_shot_map(df_shots, team_name):
         yaxis=dict(range=[0, 80], showgrid=False, zeroline=False, visible=False),
         height=400,
         hovermode='closest',
-        template="plotly_dark",
-        paper_bgcolor='#0e1117',
         plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='white',
         margin=dict(l=10, r=10, t=40, b=10)
     )
     
     st.plotly_chart(fig, use_container_width=True)
 
-def create_interval_chart(df, y_col, title, ylabel, color1='#64b5f6', color2='#ff7f0e'):
-    """Create a clean interval chart (dark mode)"""
+def create_interval_chart(df, y_col, title, ylabel, color1='#1f77b4', color2='#ff7f0e'):
+    """Create a clean interval chart"""
     if df.empty:
         st.warning(f"No data available for {title}")
         return
@@ -432,10 +416,7 @@ def create_interval_chart(df, y_col, title, ylabel, color1='#64b5f6', color2='#f
         yaxis_title=ylabel,
         hovermode='x unified',
         height=400,
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-        template="plotly_dark",
-        paper_bgcolor='#0e1117',
-        plot_bgcolor='#0e1117'
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
     )
     
     st.plotly_chart(fig, use_container_width=True)
@@ -757,13 +738,13 @@ elif selected_page == "⚽ Match Analysis" and selected_team and selected_match:
             st.image(flag_path, width=80)
     
     with col2:
-        st.markdown(f"<h2 style='text-align: right; margin: 0; color: white;'>{home_team}</h2>", unsafe_allow_html=True)
+        st.markdown(f"<h2 style='text-align: right; margin: 0;'>{home_team}</h2>", unsafe_allow_html=True)
     
     with col3:
-        st.markdown(f"<h1 style='text-align: center; color: #64b5f6; margin: 0;'>{home_score} - {away_score}</h1>", unsafe_allow_html=True)
+        st.markdown(f"<h1 style='text-align: center; color: #1f77b4; margin: 0;'>{home_score} - {away_score}</h1>", unsafe_allow_html=True)
     
     with col4:
-        st.markdown(f"<h2 style='text-align: left; margin: 0; color: white;'>{away_team}</h2>", unsafe_allow_html=True)
+        st.markdown(f"<h2 style='text-align: left; margin: 0;'>{away_team}</h2>", unsafe_allow_html=True)
     
     with col5:
         flag_path = get_flag_path(away_team)
