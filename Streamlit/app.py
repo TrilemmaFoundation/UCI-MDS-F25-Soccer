@@ -1,3 +1,7 @@
+
+
+
+
 import streamlit as st
 import sqlite3
 import pandas as pd
@@ -19,18 +23,19 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS for better styling
+# Dark Mode CSS Styling
 st.markdown("""
     <style>
+    /* Dark Mode Styles */
     .main-header {
         font-size: 3rem;
         font-weight: bold;
-        color: #1f77b4;
+        color: #64b5f6;
         text-align: center;
         margin-bottom: 2rem;
     }
     .metric-card {
-        background-color: #f0f2f6;
+        background-color: #1e1e1e;
         padding: 1rem;
         border-radius: 0.5rem;
         text-align: center;
@@ -42,15 +47,40 @@ st.markdown("""
         font-size: 1.1rem;
         font-weight: 600;
     }
+    .stApp {
+        background-color: #0e1117;
+    }
+    [data-testid="stSidebar"] {
+        background-color: #262730;
+    }
+    .stDataFrame {
+        background-color: #1e1e1e;
+    }
+    [data-testid="stMetricValue"] {
+        color: #ffffff;
+    }
+    .definition-box {
+        background-color: #1e1e1e;
+        padding: 1.5rem;
+        border-radius: 0.5rem;
+        border-left: 4px solid #64b5f6;
+        margin-bottom: 1rem;
+    }
+    .feature-box {
+        background-color: #262730;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
     </style>
 """, unsafe_allow_html=True)
 
 # ------------------------------
 # 1. Database Connection
 # ------------------------------
-DB_PATH = r"C:\Users\Bryan\CodeProjects\D296P-297P\UCI-MDS-F25-Soccer\statsbomb_euro2020.db"
-FLAGS_PATH = r"C:\Users\Bryan\CodeProjects\D296P-297P\UCI-MDS-F25-Soccer\imgs"
-FIELD_IMAGE_PATH = r"C:\Users\Bryan\CodeProjects\D296P-297P\UCI-MDS-F25-Soccer\imgs\soccer-field.jpg"
+DB_PATH = "/Users/indrajeet/Documents/Compsci 296p/UCI-MDS-F25-Soccer/statsbomb_euro2020.db"
+FLAGS_PATH = "/Users/indrajeet/Documents/Compsci 296p/UCI-MDS-F25-Soccer/imgs"
+FIELD_IMAGE_PATH = "/Users/indrajeet/Documents/Compsci 296p/UCI-MDS-F25-Soccer/soccer-field.jpg"
 
 # ------------------------------
 # Country to Flag Mapping
@@ -58,29 +88,12 @@ FIELD_IMAGE_PATH = r"C:\Users\Bryan\CodeProjects\D296P-297P\UCI-MDS-F25-Soccer\i
 def get_country_flag_code(country_name):
     """Map country names to flag image codes"""
     country_flag_mapping = {
-        'Turkey': 'tr',
-        'Italy': 'it',
-        'Denmark': 'dk',
-        'Finland': 'fi',
-        'Belgium': 'be',
-        'Russia': 'ru',
-        'Wales': 'gb-wls',
-        'Switzerland': 'ch',
-        'England': 'gb-eng',
-        'Croatia': 'hr',
-        'Netherlands': 'nl',
-        'Ukraine': 'ua',
-        'Austria': 'at',
-        'North Macedonia': 'mk',
-        'Scotland': 'gb-sct',
-        'Czech Republic': 'cz',
-        'Poland': 'pl',
-        'Slovakia': 'sk',
-        'Spain': 'es',
-        'Sweden': 'se',
-        'France': 'fr',
-        'Germany': 'de',
-        'Hungary': 'hu',
+        'Turkey': 'tr', 'Italy': 'it', 'Denmark': 'dk', 'Finland': 'fi',
+        'Belgium': 'be', 'Russia': 'ru', 'Wales': 'gb-wls', 'Switzerland': 'ch',
+        'England': 'gb-eng', 'Croatia': 'hr', 'Netherlands': 'nl', 'Ukraine': 'ua',
+        'Austria': 'at', 'North Macedonia': 'mk', 'Scotland': 'gb-sct',
+        'Czech Republic': 'cz', 'Poland': 'pl', 'Slovakia': 'sk', 'Spain': 'es',
+        'Sweden': 'se', 'France': 'fr', 'Germany': 'de', 'Hungary': 'hu',
         'Portugal': 'pt'
     }
     return country_flag_mapping.get(country_name, 'unknown')
@@ -164,7 +177,7 @@ def get_match_summary_stats(match_id, home_team, away_team):
                 COUNT(CASE WHEN type = 'Pass' THEN 1 END) as passes,
                 COUNT(CASE WHEN type = 'Shot' THEN 1 END) as shots,
                 COUNT(CASE WHEN type = 'Shot' AND shot_outcome = 'Goal' THEN 1 END) as goals,
-                ROUND(AVG(CASE WHEN type = 'Shot' THEN shot_statsbomb_xg END), 3) as avg_xg,
+                ROUND(SUM(CASE WHEN type = 'Shot' THEN shot_statsbomb_xg END), 3) as total_xg,
                 COUNT(CASE WHEN type = 'Pass' AND pass_outcome IS NULL THEN 1 END) * 100.0 / 
                     NULLIF(COUNT(CASE WHEN type = 'Pass' THEN 1 END), 0) as pass_accuracy,
                 COUNT(CASE WHEN type = 'Duel' THEN 1 END) as duels,
@@ -256,40 +269,63 @@ def display_team_header(team_name):
         st.markdown(f"### {team_name}")
 
 def plot_heatmap(df, event_type, title):
-    """Matplotlib heatmap overlaid on soccer field image"""
-    event_df = df[df["type"].str.contains(event_type, case=False, na=False)]
+    """Matplotlib heatmap overlaid on soccer field image (dark mode)"""
+    event_df = df[df["type"].str.contains(event_type, case=False, na=False)].copy()
 
-    if "location" in event_df.columns:
-        event_df["x"] = event_df["location"].apply(
-            lambda s: float(s.strip("[]").split(",")[0]) if pd.notnull(s) else np.nan
-        )
-        event_df["y"] = event_df["location"].apply(
-            lambda s: float(s.strip("[]").split(",")[1]) if pd.notnull(s) else np.nan
-        )
-    else:
+    if event_df.empty:
         st.warning(f"No {event_type} data available")
         return
+    
+    if "location" not in event_df.columns:
+        st.warning(f"No location data available for {event_type}")
+        return
 
-    fig, ax = plt.subplots(figsize=(6, 4))
+    # Parse location data
+    event_df["x"] = event_df["location"].apply(
+        lambda s: float(s.strip("[]").split(",")[0]) if pd.notnull(s) and s else np.nan
+    )
+    event_df["y"] = event_df["location"].apply(
+        lambda s: float(s.strip("[]").split(",")[1]) if pd.notnull(s) and s else np.nan
+    )
+    
+    # Drop rows with NaN coordinates
+    event_df = event_df.dropna(subset=["x", "y"])
+    
+    if event_df.empty:
+        st.warning(f"No valid location data for {event_type}")
+        return
+
+    plt.style.use('dark_background')
+    fig, ax = plt.subplots(figsize=(6, 4), facecolor='#0e1117')
+    ax.set_facecolor('#0e1117')
     
     if os.path.exists(FIELD_IMAGE_PATH):
         try:
             img = plt.imread(FIELD_IMAGE_PATH)
-            ax.imshow(img, extent=[0, 120, 0, 80], aspect='auto', alpha=0.5)
-        except Exception:
-            pass
+            ax.imshow(img, extent=[0, 120, 0, 80], aspect='auto', alpha=0.3)
+        except Exception as e:
+            print(f"Error loading field image: {e}")
     
-    heatmap, _, _ = np.histogram2d(event_df["x"], event_df["y"], bins=50, range=[[0, 120], [0, 80]])
-    ax.imshow(heatmap.T, extent=[0, 120, 0, 80], origin="lower", cmap="turbo", alpha=0.6)
+    # Create heatmap
+    heatmap, xedges, yedges = np.histogram2d(
+        event_df["x"].values, 
+        event_df["y"].values, 
+        bins=50, 
+        range=[[0, 120], [0, 80]]
+    )
+    
+    # Only plot if there's data
+    if heatmap.max() > 0:
+        ax.imshow(heatmap.T, extent=[0, 120, 0, 80], origin="lower", cmap="turbo", alpha=0.6)
     
     ax.set_xticks([])
     ax.set_yticks([])
-    ax.set_title(title, fontsize=11, fontweight='bold')
+    ax.set_title(title, fontsize=11, fontweight='bold', color='white')
     st.pyplot(fig)
     plt.close()
 
 def plot_interactive_shot_map(df_shots, team_name):
-    """Interactive shot map with xG values on hover using Plotly"""
+    """Interactive shot map with xG values on hover using Plotly (dark mode)"""
     team_shots = df_shots[df_shots["team"] == team_name].copy()
     
     if team_shots.empty:
@@ -334,7 +370,7 @@ def plot_interactive_shot_map(df_shots, team_name):
                     sizex=120,
                     sizey=80,
                     sizing="stretch",
-                    opacity=0.5,
+                    opacity=0.3,
                     layer="below"
                 )
             )
@@ -351,7 +387,7 @@ def plot_interactive_shot_map(df_shots, team_name):
             colorscale='Reds',
             showscale=True,
             colorbar=dict(title="xG", thickness=15),
-            line=dict(width=1, color='black'),
+            line=dict(width=1, color='white'),
             opacity=0.8
         ),
         text=team_shots["hover_text"],
@@ -365,15 +401,16 @@ def plot_interactive_shot_map(df_shots, team_name):
         yaxis=dict(range=[0, 80], showgrid=False, zeroline=False, visible=False),
         height=400,
         hovermode='closest',
+        template="plotly_dark",
+        paper_bgcolor='#0e1117',
         plot_bgcolor='rgba(0,0,0,0)',
-        paper_bgcolor='rgba(0,0,0,0)',
         margin=dict(l=10, r=10, t=40, b=10)
     )
     
     st.plotly_chart(fig, use_container_width=True)
 
-def create_interval_chart(df, y_col, title, ylabel, color1='#1f77b4', color2='#ff7f0e'):
-    """Create a clean interval chart"""
+def create_interval_chart(df, y_col, title, ylabel, color1='#64b5f6', color2='#ff7f0e'):
+    """Create a clean interval chart (dark mode)"""
     if df.empty:
         st.warning(f"No data available for {title}")
         return
@@ -399,7 +436,10 @@ def create_interval_chart(df, y_col, title, ylabel, color1='#1f77b4', color2='#f
         yaxis_title=ylabel,
         hovermode='x unified',
         height=400,
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+        template="plotly_dark",
+        paper_bgcolor='#0e1117',
+        plot_bgcolor='#0e1117'
     )
     
     st.plotly_chart(fig, use_container_width=True)
@@ -408,61 +448,202 @@ def create_interval_chart(df, y_col, title, ylabel, color1='#1f77b4', color2='#f
 # 2. Sidebar UI
 # ------------------------------
 with st.sidebar:
-    st.markdown("# Soccer Analytics")
+    st.markdown("# ⚽ Soccer Analytics")
     st.markdown("### UEFA Euro 2020")
     st.markdown("---")
     
-    selected_team = st.selectbox("Select a Team", get_teams(), key="team_select")
+    # Navigation
+    page_options = ["🏠 Home", "📊 Team Analysis", "⚽ Match Analysis"]
+    selected_page = st.radio("Navigation", page_options, label_visibility="collapsed")
     
-    if selected_team:
-        matches = get_matches(selected_team)
-        match_options = [
-            f"{row['home_team']} vs {row['away_team']}"
-            for _, row in matches.iterrows()
-        ]
-        match_options.insert(0, "Team Overview")
+    st.markdown("---")
+    
+    if selected_page != "🏠 Home":
+        selected_team = st.selectbox("Select a Team", get_teams(), key="team_select")
         
-        selected_match = st.selectbox("Select a Match", match_options, key="match_select")
-        
-        if selected_match != "Team Overview":
-            match_row = matches.iloc[match_options.index(selected_match) - 1]
-            match_id = match_row["match_id"]
-            home_team = match_row["home_team"]
-            away_team = match_row["away_team"]
-            home_score = match_row["home_score"]
-            away_score = match_row["away_score"]
-            match_date = match_row["match_date"]
-            stage = match_row["competition_stage"]
+        if selected_page == "⚽ Match Analysis" and selected_team:
+            matches = get_matches(selected_team)
+            match_options = [
+                f"{row['home_team']} vs {row['away_team']}"
+                for _, row in matches.iterrows()
+            ]
             
-            st.markdown("---")
-            st.markdown("### Match Info")
+            selected_match = st.selectbox("Select a Match", match_options, key="match_select")
             
-            # Display flags in sidebar
-            col1, col2, col3 = st.columns([1, 1, 1])
-            with col1:
-                home_flag_path = get_flag_path(home_team)
-                if os.path.exists(home_flag_path):
-                    st.image(home_flag_path, width=40)
-            with col2:
-                st.markdown(f"**VS**")
-            with col3:
-                away_flag_path = get_flag_path(away_team)
-                if os.path.exists(away_flag_path):
-                    st.image(away_flag_path, width=40)
-            
-            st.write(f"**Date:** {match_date}")
-            st.write(f"**Stage:** {stage}")
-            st.write(f"**Score:** {home_score} - {away_score}")
+            if selected_match:
+                match_row = matches[matches.apply(
+                    lambda row: f"{row['home_team']} vs {row['away_team']}" == selected_match, axis=1
+                )].iloc[0]
+                match_id = match_row["match_id"]
+                home_team = match_row["home_team"]
+                away_team = match_row["away_team"]
+                home_score = match_row["home_score"]
+                away_score = match_row["away_score"]
+                match_date = match_row["match_date"]
+                stage = match_row["competition_stage"]
+                
+                st.markdown("---")
+                st.markdown("### Match Info")
+                
+                # Display flags in sidebar
+                col1, col2, col3 = st.columns([1, 1, 1])
+                with col1:
+                    home_flag_path = get_flag_path(home_team)
+                    if os.path.exists(home_flag_path):
+                        st.image(home_flag_path, width=40)
+                with col2:
+                    st.markdown("**VS**")
+                with col3:
+                    away_flag_path = get_flag_path(away_team)
+                    if os.path.exists(away_flag_path):
+                        st.image(away_flag_path, width=40)
+                
+                st.write(f"**Date:** {match_date}")
+                st.write(f"**Stage:** {stage}")
+                st.write(f"**Score:** {home_score} - {away_score}")
 
 # ------------------------------
-# 3. Main View
+# 3. Main Views
 # ------------------------------
-st.markdown('<h1 class="main-header">Soccer Analytics Dashboard</h1>', unsafe_allow_html=True)
 
 # ------------------------------
-# 3A. Team Overview
+# 3A. Home Page
 # ------------------------------
-if selected_team and selected_match == "Team Overview":
+if selected_page == "🏠 Home":
+    st.markdown('<h1 class="main-header">⚽ Soccer Analytics Dashboard</h1>', unsafe_allow_html=True)
+    st.markdown("### UEFA Euro 2020 - Advanced Match & Team Analysis")
+    
+    st.markdown("---")
+    
+    # Introduction
+    st.markdown("""
+    Welcome to the **Soccer Analytics Dashboard**, a comprehensive platform for analyzing UEFA Euro 2020 matches 
+    using advanced metrics and visualizations. This dashboard leverages StatsBomb's open-source event data to provide 
+    deep insights into team and player performance.
+    """)
+    
+    st.markdown("---")
+    
+    # Key Metrics Definitions
+    st.markdown("## 📚 Key Metrics Explained")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("""
+        <div class="definition-box">
+        <h3>⚽ Expected Goals (xG)</h3>
+        <p><strong>Definition:</strong> A statistical measure that quantifies the quality of a scoring chance based on historical data.</p>
+        <p><strong>Range:</strong> 0.0 to 1.0, where 1.0 represents a certain goal</p>
+        <p><strong>Factors:</strong> Distance from goal, angle, body part used, assist type, defensive pressure</p>
+        <p><strong>Use Case:</strong> Evaluates shot quality and team attacking efficiency independent of actual outcomes</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("""
+        <div class="definition-box">
+        <h3>📊 Pass Accuracy</h3>
+        <p><strong>Definition:</strong> Percentage of successful passes completed by a team</p>
+        <p><strong>Calculation:</strong> (Successful Passes / Total Passes) × 100</p>
+        <p><strong>Significance:</strong> Indicates ball retention and possession quality</p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col2:
+        st.markdown("""
+        <div class="definition-box">
+        <h3>🎯 Expected Threat (xT)</h3>
+        <p><strong>Definition:</strong> Measures the value of ball progression by quantifying how actions move the ball from low-value to high-value zones</p>
+        <p><strong>Application:</strong> Evaluates progressive passing and ball-carrying effectiveness</p>
+        <p><strong>Innovation:</strong> Goes beyond simple pass completion to assess territorial advancement</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("""
+        <div class="definition-box">
+        <h3>🥊 Duels Won</h3>
+        <p><strong>Definition:</strong> Number of successful 1v1 challenges won by a player</p>
+        <p><strong>Types:</strong> Aerial duels, ground duels, tackles</p>
+        <p><strong>Importance:</strong> Reflects defensive intensity and physical dominance</p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    st.markdown("---")
+    
+    # Dashboard Features
+    st.markdown("## 🚀 Dashboard Features")
+    
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        st.markdown("""
+        <div class="feature-box">
+        <h4>📊 Team Analysis</h4>
+        <ul>
+        <li>Tournament-wide statistics</li>
+        <li>Player performance rankings</li>
+        <li>Goals, assists, and duels won</li>
+        <li>Aggregate xG metrics</li>
+        </ul>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col2:
+        st.markdown("""
+        <div class="feature-box">
+        <h4>⚽ Match Analysis</h4>
+        <ul>
+        <li>Interactive shot maps with xG</li>
+        <li>Timeline event tracking</li>
+        <li>Pass and receipt heatmaps</li>
+        <li>Head-to-head comparisons</li>
+        </ul>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col3:
+        st.markdown("""
+        <div class="feature-box">
+        <h4>📈 Visualizations</h4>
+        <ul>
+        <li>Real-time interactive charts</li>
+        <li>5-minute interval tracking</li>
+        <li>Spatial event distributions</li>
+        <li>Hoverable data points</li>
+        </ul>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    st.markdown("---")
+    
+    # Getting Started
+    st.markdown("## 🎯 Getting Started")
+    st.markdown("""
+    1. **Navigate** using the sidebar to choose between Team Analysis or Match Analysis
+    2. **Select a team** from the dropdown to explore their tournament performance
+    3. **Choose a match** (in Match Analysis mode) to dive into specific game details
+    4. **Interact** with visualizations by hovering over charts and heatmaps for detailed information
+    """)
+    
+    st.markdown("---")
+    
+    # Data Source
+    st.markdown("## 📊 Data Source")
+    st.markdown("""
+    This dashboard uses **StatsBomb Open Data** for UEFA Euro 2020, which includes:
+    - 51 tournament matches
+    - 192,692+ event records
+    - 2.5+ million tracking frames
+    - Comprehensive xG calculations for all shots
+    
+    **License:** CC BY-NC 4.0 (Non-Commercial Use)
+    """)
+
+# ------------------------------
+# 3B. Team Analysis
+# ------------------------------
+elif selected_page == "📊 Team Analysis" and selected_team:
+    st.markdown('<h1 class="main-header">📊 Team Analysis</h1>', unsafe_allow_html=True)
     st.markdown(f"## {selected_team} - Tournament Statistics")
     
     # Team-level stats
@@ -479,7 +660,7 @@ if selected_team and selected_match == "Team Overview":
         with col3:
             st.metric("Goals Scored", f"{df_team_agg['total_goals'].iloc[0]}")
         with col4:
-            st.metric("Avg xG", f"{df_team_agg['avg_xg'].iloc[0]:.3f}")
+            st.metric("Total xG", f"{df_team_agg['avg_xg'].iloc[0]:.3f}")
         with col5:
             st.metric("Total Events", f"{df_team_agg['total_events'].iloc[0]:,}")
         
@@ -508,9 +689,9 @@ if selected_team and selected_match == "Team Overview":
                 player,
                 SUM(CASE WHEN type = 'Shot' AND shot_outcome = 'Goal' THEN 1 ELSE 0 END) AS goals,
                 SUM(CASE WHEN type = 'Pass' THEN 1 ELSE 0 END) AS passes,
-                SUM(CASE WHEN type = 'Pass' AND pass_goal_assist = 1 THEN 1 ELSE 0 END) AS assists,
+                SUM(CASE WHEN type = 'Pass' AND pass_assisted_shot_id IS NOT NULL THEN 1 ELSE 0 END) AS assists,
                 SUM(CASE WHEN type = 'Duel' AND duel_outcome = 'Won' THEN 1 ELSE 0 END) AS duels_won,
-                ROUND(AVG(CASE WHEN type = 'Shot' THEN shot_statsbomb_xg END), 3) as avg_xg
+                ROUND(SUM(CASE WHEN type = 'Shot' THEN shot_statsbomb_xg END), 3) as total_xg
             FROM team_events
             WHERE player IS NOT NULL
             GROUP BY player
@@ -522,7 +703,7 @@ if selected_team and selected_match == "Team Overview":
         conn.close()
         
         if not df_players.empty:
-            tab1, tab2 = st.tabs(["Full Statistics", "Top Performers"])
+            tab1, tab2 = st.tabs(["📋 Full Statistics", "🏆 Top Performers"])
             
             with tab1:
                 st.dataframe(df_players, use_container_width=True, hide_index=True)
@@ -531,41 +712,47 @@ if selected_team and selected_match == "Team Overview":
                 col1, col2, col3, col4 = st.columns(4)
                 
                 with col1:
-                    st.markdown("#### Top Scorers")
+                    st.markdown("#### ⚽ Top Scorers")
                     top_scorers = df_players.nlargest(5, 'goals')[['player', 'goals']]
                     for _, row in top_scorers.iterrows():
                         if row['goals'] > 0:
                             st.write(f"**{row['player']}** - {int(row['goals'])} goals")
                 
                 with col2:
-                    st.markdown("#### Top Assist Providers")
+                    st.markdown("#### 🎯 Top Assist Providers")
                     top_assists = df_players.nlargest(5, 'assists')[['player', 'assists']]
-                    for _, row in top_assists.iterrows():
-                        if row['assists'] > 0:
-                            st.write(f"**{row['player']}** - {int(row['assists'])} assists")
+                    if not top_assists.empty and top_assists['assists'].sum() > 0:
+                        for _, row in top_assists.iterrows():
+                            if row['assists'] > 0:
+                                st.write(f"**{row['player']}** - {int(row['assists'])} assists")
+                    else:
+                        st.write("No assist data available")
                 
                 with col3:
-                    st.markdown("#### Most Passes")
+                    st.markdown("#### 📦 Most Passes")
                     top_passers = df_players.nlargest(5, 'passes')[['player', 'passes']]
                     for _, row in top_passers.iterrows():
                         st.write(f"**{row['player']}** - {int(row['passes'])} passes")
                 
                 with col4:
-                    st.markdown("#### Most Duels Won")
+                    st.markdown("#### 🥊 Most Duels Won")
                     top_duels = df_players.nlargest(5, 'duels_won')[['player', 'duels_won']]
-                    for _, row in top_duels.iterrows():
-                        if row['duels_won'] > 0:
-                            st.write(f"**{row['player']}** - {int(row['duels_won'])} won")
+                    if not top_duels.empty and top_duels['duels_won'].sum() > 0:
+                        for _, row in top_duels.iterrows():
+                            if row['duels_won'] > 0:
+                                st.write(f"**{row['player']}** - {int(row['duels_won'])} won")
+                    else:
+                        st.write("No duel data available")
 
 # ------------------------------
-# 3B. Match Analysis
+# 3C. Match Analysis
 # ------------------------------
-elif selected_team and selected_match and selected_match != "Team Overview":
+elif selected_page == "⚽ Match Analysis" and selected_team and selected_match:
+    st.markdown('<h1 class="main-header">⚽ Match Analysis</h1>', unsafe_allow_html=True)
     
-    # Match header with score and flags
     st.markdown("---")
     
-    # Header with flags and teams
+    # Match header with score and flags
     col1, col2, col3, col4, col5 = st.columns([2, 1, 2, 1, 2])
     
     with col1:
@@ -574,13 +761,13 @@ elif selected_team and selected_match and selected_match != "Team Overview":
             st.image(flag_path, width=80)
     
     with col2:
-        st.markdown(f"<h2 style='text-align: right; margin: 0;'>{home_team}</h2>", unsafe_allow_html=True)
+        st.markdown(f"<h2 style='text-align: right; margin: 0; color: white;'>{home_team}</h2>", unsafe_allow_html=True)
     
     with col3:
-        st.markdown(f"<h1 style='text-align: center; color: #1f77b4; margin: 0;'>{home_score} - {away_score}</h1>", unsafe_allow_html=True)
+        st.markdown(f"<h1 style='text-align: center; color: #64b5f6; margin: 0;'>{home_score} - {away_score}</h1>", unsafe_allow_html=True)
     
     with col4:
-        st.markdown(f"<h2 style='text-align: left; margin: 0;'>{away_team}</h2>", unsafe_allow_html=True)
+        st.markdown(f"<h2 style='text-align: left; margin: 0; color: white;'>{away_team}</h2>", unsafe_allow_html=True)
     
     with col5:
         flag_path = get_flag_path(away_team)
@@ -603,7 +790,7 @@ elif selected_team and selected_match and selected_match != "Team Overview":
             st.metric("Shots", f"{summary_stats[home_team]['shots']:.0f}")
         with metric_col2:
             st.metric("Goals", f"{summary_stats[home_team]['goals']:.0f}")
-            st.metric("Avg xG", f"{summary_stats[home_team]['avg_xg']:.3f}" if summary_stats[home_team]['avg_xg'] else "0.000")
+            st.metric("Total xG", f"{summary_stats[home_team]['total_xg']:.3f}" if summary_stats[home_team]['total_xg'] else "0.000")
         with metric_col3:
             st.metric("Pass Acc.", f"{summary_stats[home_team]['pass_accuracy']:.1f}%" if summary_stats[home_team]['pass_accuracy'] else "0%")
             st.metric("Fouls", f"{summary_stats[home_team]['fouls']:.0f}")
@@ -616,7 +803,7 @@ elif selected_team and selected_match and selected_match != "Team Overview":
             st.metric("Shots", f"{summary_stats[away_team]['shots']:.0f}")
         with metric_col2:
             st.metric("Goals", f"{summary_stats[away_team]['goals']:.0f}")
-            st.metric("Avg xG", f"{summary_stats[away_team]['avg_xg']:.3f}" if summary_stats[away_team]['avg_xg'] else "0.000")
+            st.metric("Total xG", f"{summary_stats[away_team]['total_xg']:.3f}" if summary_stats[away_team]['total_xg'] else "0.000")
         with metric_col3:
             st.metric("Pass Acc.", f"{summary_stats[away_team]['pass_accuracy']:.1f}%" if summary_stats[away_team]['pass_accuracy'] else "0%")
             st.metric("Fouls", f"{summary_stats[away_team]['fouls']:.0f}")
@@ -624,7 +811,7 @@ elif selected_team and selected_match and selected_match != "Team Overview":
     st.markdown("---")
     
     # Tabbed interface for different analyses
-    tab1, tab2, tab3 = st.tabs(["Timeline Analysis", "Shot Analysis", "Position Heatmaps"])
+    tab1, tab2, tab3 = st.tabs(["📈 Timeline Analysis", "🎯 Shot Analysis", "🗺️ Position Heatmaps"])
     
     with tab1:
         st.markdown("### Match Timeline - Events per 5-Minute Interval")
@@ -642,7 +829,7 @@ elif selected_team and selected_match and selected_match != "Team Overview":
         create_interval_chart(df_receive, "receive_count", "Ball Receipts Over Time", "Number of Receipts")
     
     with tab2:
-        st.markdown("### Shot Maps")
+        st.markdown("### 🎯 Shot Maps (Hover for Details)")
         df_shots = get_shots_with_xg(match_id)
         
         if not df_shots.empty:
