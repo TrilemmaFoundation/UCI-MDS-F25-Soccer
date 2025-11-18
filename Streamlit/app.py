@@ -61,9 +61,9 @@ st.markdown("""
 # ------------------------------
 # 1. Database Connection
 # ------------------------------
-DB_PATH = "/Users/indrajeet/Documents/Compsci 296p/UCI-MDS-F25-Soccer/statsbomb_euro2020.db"
-FLAGS_PATH = "/Users/indrajeet/Documents/Compsci 296p/UCI-MDS-F25-Soccer/imgs"
-FIELD_IMAGE_PATH = "/Users/indrajeet/Documents/Compsci 296p/UCI-MDS-F25-Soccer/imgs/soccer-field.jpg"
+DB_PATH = r"C:\Users\Bryan\CodeProjects\D296P-297P\UCI-MDS-F25-Soccer\statsbomb_euro2020.db"
+FLAGS_PATH = r"C:\Users\Bryan\CodeProjects\D296P-297P\UCI-MDS-F25-Soccer\imgs"
+FIELD_IMAGE_PATH = r"C:\Users\Bryan\CodeProjects\D296P-297P\UCI-MDS-F25-Soccer\imgs\soccer-field.jpg"
 
 # ------------------------------
 # Country to Flag Mapping
@@ -247,7 +247,7 @@ def display_team_header(team_name):
         if os.path.exists(flag_path):
             st.image(flag_path, width=50)
         else:
-            st.write("🏳️")
+            st.write("Flag")
     with col_text:
         st.markdown(f"### {team_name}")
 
@@ -425,20 +425,20 @@ def create_interval_chart(df, y_col, title, ylabel, color1='#1f77b4', color2='#f
 # 2. Sidebar UI
 # ------------------------------
 with st.sidebar:
-    st.markdown("# ⚽ Soccer Analytics")
+    st.markdown("# Soccer Analytics")
     st.markdown("### UEFA Euro 2020")
     st.markdown("---")
     
     # Navigation
-    page_options = ["🏠 Home", "📊 Team Analysis", "⚽ Match Analysis"]
+    page_options = ["Home", "Team Analysis", "Match Analysis"]
     selected_page = st.radio("Navigation", page_options, label_visibility="collapsed")
     
     st.markdown("---")
     
-    if selected_page != "🏠 Home":
+    if selected_page != "Home":
         selected_team = st.selectbox("Select a Team", get_teams(), key="team_select")
         
-        if selected_page == "⚽ Match Analysis" and selected_team:
+        if selected_page == "Match Analysis" and selected_team:
             matches = get_matches(selected_team)
             match_options = [
                 f"{row['home_team']} vs {row['away_team']}"
@@ -486,8 +486,8 @@ with st.sidebar:
 # ------------------------------
 # 3A. Home Page
 # ------------------------------
-if selected_page == "🏠 Home":
-    st.markdown('<h1 class="main-header">⚽ Soccer Analytics Dashboard</h1>', unsafe_allow_html=True)
+if selected_page == "Home":
+    st.markdown('<h1 class="main-header">Soccer Analytics Dashboard</h1>', unsafe_allow_html=True)
     st.markdown("### UEFA Euro 2020 - Advanced Match & Team Analysis")
     
     st.markdown("---")
@@ -502,14 +502,14 @@ if selected_page == "🏠 Home":
     st.markdown("---")
     
     # Key Metrics Definitions
-    st.markdown("## 📚 Key Metrics Explained")
+    st.markdown("## Key Metrics Explained")
     
     col1, col2 = st.columns(2)
     
     with col1:
         st.markdown("""
         <div class="definition-box">
-        <h3>⚽ Expected Goals (xG)</h3>
+        <h3>Expected Goals (xG)</h3>
         <p><strong>Definition:</strong> A statistical measure that quantifies the quality of a scoring chance based on historical data.</p>
         <p><strong>Range:</strong> 0.0 to 1.0, where 1.0 represents a certain goal</p>
         <p><strong>Factors:</strong> Distance from goal, angle, body part used, assist type, defensive pressure</p>
@@ -519,7 +519,7 @@ if selected_page == "🏠 Home":
         
         st.markdown("""
         <div class="definition-box">
-        <h3>📊 Pass Accuracy</h3>
+        <h3>Pass Accuracy</h3>
         <p><strong>Definition:</strong> Percentage of successful passes completed by a team</p>
         <p><strong>Calculation:</strong> (Successful Passes / Total Passes) × 100</p>
         <p><strong>Significance:</strong> Indicates ball retention and possession quality</p>
@@ -529,7 +529,7 @@ if selected_page == "🏠 Home":
     with col2:
         st.markdown("""
         <div class="definition-box">
-        <h3>🎯 Expected Threat (xT)</h3>
+        <h3>Expected Threat (xT)</h3>
         <p><strong>Definition:</strong> Measures the value of ball progression by quantifying how actions move the ball from low-value to high-value zones</p>
         <p><strong>Application:</strong> Evaluates progressive passing and ball-carrying effectiveness</p>
         <p><strong>Innovation:</strong> Goes beyond simple pass completion to assess territorial advancement</p>
@@ -538,24 +538,25 @@ if selected_page == "🏠 Home":
         
         st.markdown("""
         <div class="definition-box">
-        <h3>🥊 Duels Won</h3>
-        <p><strong>Definition:</strong> Number of successful 1v1 challenges won by a player</p>
-        <p><strong>Types:</strong> Aerial duels, ground duels, tackles</p>
-        <p><strong>Importance:</strong> Reflects defensive intensity and physical dominance</p>
+        <h3>Field Tilt</h3>
+        <p><strong>Definition:</strong> Measures territorial dominance by calculating the percentage of final third passes made by a team</p>
+        <p><strong>Calculation:</strong> (Team's Final Third Passes / Total Final Third Passes) × 100</p>
+        <p><strong>Significance:</strong> Indicates which team is controlling the game in attacking areas and applying sustained pressure</p>
+        <p><strong>Interpretation:</strong> Higher field tilt percentage suggests greater attacking territorial control</p>
         </div>
         """, unsafe_allow_html=True)
     
     st.markdown("---")
     
     # Dashboard Features
-    st.markdown("## 🚀 Dashboard Features")
+    st.markdown("## Dashboard Features")
     
     col1, col2, col3 = st.columns(3)
     
     with col1:
         st.markdown("""
         <div class="feature-box">
-        <h4>📊 Team Analysis</h4>
+        <h4>Team Analysis</h4>
         <ul>
         <li>Tournament-wide statistics</li>
         <li>Player performance rankings</li>
@@ -568,7 +569,7 @@ if selected_page == "🏠 Home":
     with col2:
         st.markdown("""
         <div class="feature-box">
-        <h4>⚽ Match Analysis</h4>
+        <h4>Match Analysis</h4>
         <ul>
         <li>Interactive shot maps with xG</li>
         <li>Timeline event tracking</li>
@@ -581,7 +582,7 @@ if selected_page == "🏠 Home":
     with col3:
         st.markdown("""
         <div class="feature-box">
-        <h4>📈 Visualizations</h4>
+        <h4>Visualizations</h4>
         <ul>
         <li>Real-time interactive charts</li>
         <li>5-minute interval tracking</li>
@@ -594,7 +595,7 @@ if selected_page == "🏠 Home":
     st.markdown("---")
     
     # Getting Started
-    st.markdown("## 🎯 Getting Started")
+    st.markdown("## Getting Started")
     st.markdown("""
     1. **Navigate** using the sidebar to choose between Team Analysis or Match Analysis
     2. **Select a team** from the dropdown to explore their tournament performance
@@ -605,7 +606,7 @@ if selected_page == "🏠 Home":
     st.markdown("---")
     
     # Data Source
-    st.markdown("## 📊 Data Source")
+    st.markdown("## Data Source")
     st.markdown("""
     This dashboard uses **StatsBomb Open Data** for UEFA Euro 2020, which includes:
     - 51 tournament matches
@@ -619,8 +620,8 @@ if selected_page == "🏠 Home":
 # ------------------------------
 # 3B. Team Analysis
 # ------------------------------
-elif selected_page == "📊 Team Analysis" and selected_team:
-    st.markdown('<h1 class="main-header">📊 Team Analysis</h1>', unsafe_allow_html=True)
+elif selected_page == "Team Analysis" and selected_team:
+    st.markdown('<h1 class="main-header">Team Analysis</h1>', unsafe_allow_html=True)
     st.markdown(f"## {selected_team} - Tournament Statistics")
     
     # Team-level stats
@@ -680,7 +681,7 @@ elif selected_page == "📊 Team Analysis" and selected_team:
         conn.close()
         
         if not df_players.empty:
-            tab1, tab2 = st.tabs(["📋 Full Statistics", "🏆 Top Performers"])
+            tab1, tab2 = st.tabs(["Full Statistics", "Top Performers"])
             
             with tab1:
                 st.dataframe(df_players, use_container_width=True, hide_index=True)
@@ -689,14 +690,14 @@ elif selected_page == "📊 Team Analysis" and selected_team:
                 col1, col2, col3, col4 = st.columns(4)
                 
                 with col1:
-                    st.markdown("#### ⚽ Top Scorers")
+                    st.markdown("#### Top Scorers")
                     top_scorers = df_players.nlargest(5, 'goals')[['player', 'goals']]
                     for _, row in top_scorers.iterrows():
                         if row['goals'] > 0:
                             st.write(f"**{row['player']}** - {int(row['goals'])} goals")
                 
                 with col2:
-                    st.markdown("#### 🎯 Top Assist Providers")
+                    st.markdown("#### Top Assist Providers")
                     top_assists = df_players.nlargest(5, 'assists')[['player', 'assists']]
                     if not top_assists.empty and top_assists['assists'].sum() > 0:
                         for _, row in top_assists.iterrows():
@@ -706,13 +707,13 @@ elif selected_page == "📊 Team Analysis" and selected_team:
                         st.write("No assist data available")
                 
                 with col3:
-                    st.markdown("#### 📦 Most Passes")
+                    st.markdown("#### Most Passes")
                     top_passers = df_players.nlargest(5, 'passes')[['player', 'passes']]
                     for _, row in top_passers.iterrows():
                         st.write(f"**{row['player']}** - {int(row['passes'])} passes")
                 
                 with col4:
-                    st.markdown("#### 🥊 Most Duels Won")
+                    st.markdown("#### Most Duels Won")
                     top_duels = df_players.nlargest(5, 'duels_won')[['player', 'duels_won']]
                     if not top_duels.empty and top_duels['duels_won'].sum() > 0:
                         for _, row in top_duels.iterrows():
@@ -724,8 +725,8 @@ elif selected_page == "📊 Team Analysis" and selected_team:
 # ------------------------------
 # 3C. Match Analysis
 # ------------------------------
-elif selected_page == "⚽ Match Analysis" and selected_team and selected_match:
-    st.markdown('<h1 class="main-header">⚽ Match Analysis</h1>', unsafe_allow_html=True)
+elif selected_page == "Match Analysis" and selected_team and selected_match:
+    st.markdown('<h1 class="main-header">Match Analysis</h1>', unsafe_allow_html=True)
     
     st.markdown("---")
     
@@ -788,7 +789,7 @@ elif selected_page == "⚽ Match Analysis" and selected_team and selected_match:
     st.markdown("---")
     
     # Tabbed interface for different analyses
-    tab1, tab2, tab3 = st.tabs(["📈 Timeline Analysis", "🎯 Shot Analysis", "🗺️ Position Heatmaps"])
+    tab1, tab2, tab3 = st.tabs(["Timeline Analysis", "Shot Analysis", "Position Heatmaps"])
     
     with tab1:
         st.markdown("### Match Timeline - Events per 5-Minute Interval")
@@ -806,7 +807,7 @@ elif selected_page == "⚽ Match Analysis" and selected_team and selected_match:
         create_interval_chart(df_receive, "receive_count", "Ball Receipts Over Time", "Number of Receipts")
     
     with tab2:
-        st.markdown("### 🎯 Shot Maps (Hover for Details)")
+        st.markdown("### Shot Maps (Hover for Details)")
         df_shots = get_shots_with_xg(match_id)
         
         if not df_shots.empty:
