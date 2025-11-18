@@ -6,7 +6,7 @@ UC Irvine MDS Fall 2025 Soccer Capstone
 
 We are all Master of Data Science students at the University of California Irvine, but here's a bit about the individual members.
 
-![Timothy Ng](https://media.licdn.com/dms/image/v2/C5603AQFJc2fZzS1gEQ/profile-displayphoto-shrink_200_200/profile-displayphoto-shrink_200_200/0/1662760328894?e=1762387200&v=beta&t=6bm-utJ2WrblYD-5TOkq2UjQ3yeGBxKwYLtjZ0zd4is)
+![Timothy Ng](https://raw.githubusercontent.com/timng-gnmit/timng-gnmit/refs/heads/main/tim.png)
 
 **Name:** Timothy Ng  
 **Undergraduate Experience:** Math @ University of California, Davis  
