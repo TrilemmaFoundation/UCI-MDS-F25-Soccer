@@ -6,7 +6,8 @@ UC Irvine MDS Fall 2025 Soccer Capstone
 
 We are all Master of Data Science students at the University of California Irvine, but here's a bit about the individual members.
 
-<img src="https://raw.githubusercontent.com/timng-gnmit/timng-gnmit/refs/heads/main/tim.png" alt="Timothy Ng" width="200"/>
+<img src="https://raw.githubusercontent.com/timng-gnmit/timng-gnmit/refs/heads/main/tim.png" alt="Timothy Ng" width="200"/>  
+
 **Name:** Timothy Ng  
 **Undergraduate Experience:** Math @ University of California, Davis  
 **About Me:** I love making coffee and cooking! I try to make latte art every morning, and I've been writing a recipe book that currently has over 35 recipes.  
