@@ -61,9 +61,9 @@ st.markdown("""
 # ------------------------------
 # 1. Database Connection
 # ------------------------------
-DB_PATH = r"C:\Users\Bryan\CodeProjects\D296P-297P\UCI-MDS-F25-Soccer\statsbomb_euro2020.db"
-FLAGS_PATH = r"C:\Users\Bryan\CodeProjects\D296P-297P\UCI-MDS-F25-Soccer\imgs"
-FIELD_IMAGE_PATH = r"C:\Users\Bryan\CodeProjects\D296P-297P\UCI-MDS-F25-Soccer\imgs\soccer-field.jpg"
+DB_PATH = "../statsbomb/statsbomb_euro2020.db"
+FLAGS_PATH = "../imgs"
+FIELD_IMAGE_PATH = "../imgs/soccer-field.jpg"
 
 # ------------------------------
 # Country to Flag Mapping
@@ -283,7 +283,7 @@ def plot_heatmap(df, event_type, title):
     if os.path.exists(FIELD_IMAGE_PATH):
         try:
             img = plt.imread(FIELD_IMAGE_PATH)
-            ax.imshow(img, extent=[0, 120, 0, 80], aspect='auto', alpha=0.5)
+            ax.imshow(img, extent=[0, 120, 0, 80], alpha=0.5)
         except Exception as e:
             print(f"Error loading field image: {e}")
     
@@ -347,10 +347,10 @@ def plot_interactive_shot_map(df_shots, team_name):
                     xref="x",
                     yref="y",
                     x=0,
-                    y=80,
+                    y=77,
                     sizex=120,
-                    sizey=80,
-                    sizing="stretch",
+                    sizey=77,
+                    # sizing="x",
                     opacity=0.5,
                     layer="below"
                 )
@@ -379,12 +379,12 @@ def plot_interactive_shot_map(df_shots, team_name):
     fig.update_layout(
         title=f"{team_name} - Shot Map",
         xaxis=dict(range=[0, 120], showgrid=False, zeroline=False, visible=False),
-        yaxis=dict(range=[0, 80], showgrid=False, zeroline=False, visible=False),
+        yaxis=dict(showgrid=False, zeroline=False, visible=False, scaleanchor="x", scaleratio=1),
         height=400,
         hovermode='closest',
         plot_bgcolor='rgba(0,0,0,0)',
         paper_bgcolor='white',
-        margin=dict(l=10, r=10, t=40, b=10)
+        margin=dict(l=0, r=0, t=0, b=0)
     )
     
     st.plotly_chart(fig, use_container_width=True)

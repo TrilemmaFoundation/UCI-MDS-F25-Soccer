@@ -1,7 +1,7 @@
 import sqlite3
 import pandas as pd
 
-DB_PATH = "statsbomb_euro2020.db"
+DB_PATH = "../statsbomb/statsbomb_euro2020.db"
 
 # def get_teams():
 #     conn = sqlite3.connect(DB_PATH)
