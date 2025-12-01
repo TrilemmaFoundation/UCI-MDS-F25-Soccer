@@ -9,6 +9,34 @@ import os
 from aggregate_stats import get_team_aggregate_stats
 from PIL import Image
 
+from db_queries import (
+    get_teams,
+    get_matches,
+    get_events,
+    get_shots_with_xg,
+    get_match_summary_stats,
+    get_pass_intervals,
+    get_shot_intervals,
+    get_receive_intervals,
+    get_passes_by_interval,
+    get_match_duration,
+    get_team_comparison_data,
+    get_team_ranking_data
+)
+
+from stats_utils import (
+    get_field_tilt_data,
+    get_ppda_data,
+    get_team_field_tilt_averages,
+    get_team_ppda_averages
+)
+
+from heatmaps import (
+    plot_heatmap,
+    plot_animated_pass_heatmap
+)
+
+
 # ------------------------------
 # Page Configuration
 # ------------------------------
@@ -85,354 +113,12 @@ def get_country_flag_code(country_name):
     }
     return country_flag_mapping.get(country_name, 'unknown')
 
+
 def get_flag_path(country_name):
     """Get the full path to the flag image for a country"""
     flag_code = get_country_flag_code(country_name)
     flag_path = os.path.join(FLAGS_PATH, f"{flag_code}.png")
     return flag_path
-
-# ------------------------------
-# Cached Database Queries
-# ------------------------------
-@st.cache_data
-def get_teams():
-    conn = sqlite3.connect(DB_PATH)
-    query = """
-        SELECT DISTINCT home_team AS team FROM matches
-        UNION
-        SELECT DISTINCT away_team AS team FROM matches
-        ORDER BY team;
-    """
-    teams = pd.read_sql_query(query, conn)
-    conn.close()
-    return teams["team"].tolist()
-
-@st.cache_data
-def get_matches(team):
-    conn = sqlite3.connect(DB_PATH)
-    query = f"""
-        SELECT match_id, home_team, away_team, match_date, home_score, away_score, competition_stage
-        FROM matches
-        WHERE home_team = '{team}' OR away_team = '{team}'
-        ORDER BY match_date;
-    """
-    matches = pd.read_sql_query(query, conn)
-    conn.close()
-    return matches
-
-@st.cache_data
-def get_events(match_id):
-    conn = sqlite3.connect(DB_PATH)
-    query = f"SELECT * FROM events WHERE match_id = {match_id};"
-    df = pd.read_sql_query(query, conn)
-    conn.close()
-    return df
-
-@st.cache_data
-def get_shots_with_xg(match_id):
-    """Get shot events with xG values"""
-    conn = sqlite3.connect(DB_PATH)
-    query = f"""
-        SELECT 
-            team,
-            location,
-            shot_statsbomb_xg,
-            player,
-            minute,
-            second,
-            shot_outcome,
-            shot_body_part,
-            shot_technique
-        FROM events
-        WHERE match_id = {match_id} 
-        AND type = 'Shot'
-        AND shot_statsbomb_xg IS NOT NULL;
-    """
-    df = pd.read_sql_query(query, conn)
-    conn.close()
-    return df
-
-@st.cache_data
-def get_match_summary_stats(match_id, home_team, away_team):
-    """Get summary statistics for a match"""
-    conn = sqlite3.connect(DB_PATH)
-    
-    stats = {}
-    for team in [home_team, away_team]:
-        query = f"""
-            SELECT 
-                COUNT(CASE WHEN type = 'Pass' THEN 1 END) as passes,
-                COUNT(CASE WHEN type = 'Shot' THEN 1 END) as shots,
-                COUNT(CASE WHEN type = 'Shot' AND shot_outcome = 'Goal' THEN 1 END) as goals,
-                ROUND(SUM(CASE WHEN type = 'Shot' THEN shot_statsbomb_xg END), 3) as total_xg,
-                COUNT(CASE WHEN type = 'Pass' AND pass_outcome IS NULL THEN 1 END) * 100.0 / 
-                    NULLIF(COUNT(CASE WHEN type = 'Pass' THEN 1 END), 0) as pass_accuracy,
-                COUNT(CASE WHEN type = 'Duel' THEN 1 END) as duels,
-                COUNT(CASE WHEN type = 'Foul Committed' THEN 1 END) as fouls
-            FROM events
-            WHERE match_id = {match_id} AND team = '{team}';
-        """
-        df = pd.read_sql_query(query, conn)
-        stats[team] = df.iloc[0].to_dict()
-    
-    conn.close()
-    return stats
-
-# ------------------------------
-# Event interval queries
-# ------------------------------
-def get_pass_intervals(match_id):
-    conn = sqlite3.connect(DB_PATH)
-    query = f"""
-        WITH pass_intervals AS (
-            SELECT
-                team,
-                ((minute / 5) * 5) AS interval_start,
-                COUNT(*) AS pass_count
-            FROM passes
-            WHERE match_id = {match_id}
-            GROUP BY team, interval_start
-        )
-        SELECT * FROM pass_intervals
-        ORDER BY interval_start, team;
-    """
-    df = pd.read_sql_query(query, conn)
-    conn.close()
-    return df
-
-def get_shot_intervals(match_id):
-    conn = sqlite3.connect(DB_PATH)
-    query = f"""
-        WITH shot_intervals AS (
-            SELECT
-                team,
-                ((minute / 5) * 5) AS interval_start,
-                COUNT(*) AS shot_count
-            FROM events
-            WHERE match_id = {match_id}
-            AND type = 'Shot'
-            GROUP BY team, interval_start
-        )
-        SELECT * FROM shot_intervals
-        ORDER BY interval_start, team;
-    """
-    df = pd.read_sql_query(query, conn)
-    conn.close()
-    return df
-
-def get_receive_intervals(match_id):
-    conn = sqlite3.connect(DB_PATH)
-    query = f"""
-        WITH receive_intervals AS (
-            SELECT
-                team,
-                ((minute / 5) * 5) AS interval_start,
-                COUNT(*) AS receive_count
-            FROM events
-            WHERE match_id = {match_id}
-            AND type LIKE 'Ball Receipt%'
-            GROUP BY team, interval_start
-        )
-        SELECT * FROM receive_intervals
-        ORDER BY interval_start, team;
-    """
-    df = pd.read_sql_query(query, conn)
-    conn.close()
-    return df
-
-@st.cache_data
-def get_passes_by_interval(match_id, start_minute, end_minute):
-    """Get pass locations for a specific time interval"""
-    conn = sqlite3.connect(DB_PATH)
-    query = f"""
-        SELECT 
-            team,
-            location,
-            minute,
-            player
-        FROM events
-        WHERE match_id = {match_id}
-        AND type = 'Pass'
-        AND location IS NOT NULL
-        AND minute >= {start_minute}
-        AND minute < {end_minute}
-        ORDER BY minute, second;
-    """
-    df = pd.read_sql_query(query, conn)
-    conn.close()
-    return df
-
-@st.cache_data
-def get_match_duration(match_id):
-    """Get the maximum minute in the match to determine duration"""
-    conn = sqlite3.connect(DB_PATH)
-    query = f"""
-        SELECT MAX(minute) as max_minute
-        FROM events
-        WHERE match_id = {match_id};
-    """
-    df = pd.read_sql_query(query, conn)
-    conn.close()
-    max_min = df.iloc[0]['max_minute']
-    # Round up to nearest 5-minute interval and convert to int
-    return int(((max_min // 5) + 1) * 5) if max_min else 90
-
-@st.cache_data
-def get_field_tilt_data(match_id):
-    """Get field tilt data for a specific match"""
-    try:
-        df_field_tilt = pd.read_csv(FIELD_TILT_CSV_PATH)
-        match_data = df_field_tilt[df_field_tilt['match_id'] == match_id]
-        
-        if match_data.empty:
-            return None
-        
-        # Create a dictionary with team as key
-        field_tilt_dict = {}
-        for _, row in match_data.iterrows():
-            field_tilt_dict[row['team']] = {
-                'final_third_passes': int(row['final_third_passes']),
-                'field_tilt': float(row['field_tilt'])
-            }
-        
-        return field_tilt_dict
-    except Exception as e:
-        print(f"Error loading field tilt data: {e}")
-        return None
-
-@st.cache_data
-def get_ppda_data(match_id):
-    """Get PPDA data for a specific match"""
-    try:
-        df_ppda = pd.read_csv(PPDA_CSV_PATH)
-        match_data = df_ppda[df_ppda['match_id'] == match_id]
-        
-        if match_data.empty:
-            return None
-        
-        # Create a dictionary with team as key
-        ppda_dict = {}
-        for _, row in match_data.iterrows():
-            ppda_dict[row['team']] = {
-                'passes_opponent': int(row['passes_opponent']),
-                'def_actions': int(row['def_actions']),
-                'ppda': float(row['PPDA'])
-            }
-        
-        return ppda_dict
-    except Exception as e:
-        print(f"Error loading PPDA data: {e}")
-        return None
-
-@st.cache_data
-def get_team_field_tilt_averages():
-    """Get average field tilt for all teams"""
-    try:
-        df_field_tilt = pd.read_csv(FIELD_TILT_AVG_CSV_PATH)
-        return df_field_tilt.set_index('team')['field_tilt'].to_dict()
-    except Exception as e:
-        print(f"Error loading team field tilt averages: {e}")
-        return {}
-
-@st.cache_data
-def get_team_ppda_averages():
-    """Get average PPDA for all teams"""
-    try:
-        df_ppda = pd.read_csv(PPDA_AVG_CSV_PATH)
-        return df_ppda.set_index('team')['PPDA'].to_dict()
-    except Exception as e:
-        print(f"Error loading team PPDA averages: {e}")
-        return {}
-    
-@st.cache_data
-def get_team_comparison_data():
-    """Get comprehensive team comparison data"""
-    conn = sqlite3.connect(DB_PATH)
-    
-    # Get all teams
-    teams_query = """
-        SELECT DISTINCT home_team AS team FROM matches
-        UNION
-        SELECT DISTINCT away_team AS team FROM matches
-        ORDER BY team;
-    """
-    teams = pd.read_sql_query(teams_query, conn)["team"].tolist()
-    
-    comparison_data = {}
-    
-    for team in teams:
-        # Get match IDs for the team
-        match_ids_query = f"""
-            SELECT match_id FROM matches
-            WHERE home_team = '{team}' OR away_team = '{team}';
-        """
-        match_ids_df = pd.read_sql_query(match_ids_query, conn)
-        match_ids = match_ids_df["match_id"].tolist()
-        
-        if not match_ids:
-            continue
-            
-        match_ids_str = ",".join(map(str, match_ids))
-        
-        # Comprehensive team stats
-        stats_query = f"""
-            WITH team_events AS (
-                SELECT *
-                FROM events
-                WHERE match_id IN ({match_ids_str})
-                AND team = '{team}'
-            )
-            SELECT 
-                COUNT(*) as total_events,
-                COUNT(CASE WHEN type = 'Pass' THEN 1 END) as total_passes,
-                COUNT(CASE WHEN type = 'Shot' THEN 1 END) as total_shots,
-                COUNT(CASE WHEN type = 'Shot' AND shot_outcome = 'Goal' THEN 1 END) as goals_scored,
-                COUNT(CASE WHEN type = 'Pass' AND pass_assisted_shot_id IS NOT NULL THEN 1 END) as assists,
-                COUNT(CASE WHEN type = 'Duel' AND duel_outcome = 'Won' THEN 1 END) as duels_won,
-                COUNT(CASE WHEN type = 'Interception' THEN 1 END) as interceptions,
-                COUNT(CASE WHEN type = 'Foul Committed' THEN 1 END) as fouls_committed,
-                COUNT(CASE WHEN type = 'Foul Won' THEN 1 END) as fouls_won,
-                ROUND(SUM(CASE WHEN type = 'Shot' THEN shot_statsbomb_xg END), 3) as total_xg,
-                ROUND(AVG(CASE WHEN type = 'Shot' THEN shot_statsbomb_xg END), 3) as avg_shot_xg,
-                COUNT(CASE WHEN type = 'Pass' AND pass_outcome IS NULL THEN 1 END) * 100.0 / 
-                    NULLIF(COUNT(CASE WHEN type = 'Pass' THEN 1 END), 0) as pass_accuracy
-            FROM team_events;
-        """
-        
-        stats_df = pd.read_sql_query(stats_query, conn)
-        
-        if not stats_df.empty:
-            stats = stats_df.iloc[0].to_dict()
-            
-            # Calculate derived metrics
-            stats['scoring_accuracy'] = (stats['goals_scored'] / stats['total_shots'] * 100) if stats['total_shots'] > 0 else 0
-            stats['xg_efficiency'] = (stats['goals_scored'] / stats['total_xg']) if stats['total_xg'] > 0 else 0
-            stats['matches_played'] = len(match_ids)
-            stats['goals_per_match'] = stats['goals_scored'] / stats['matches_played'] if stats['matches_played'] > 0 else 0
-            
-            comparison_data[team] = stats
-    
-    conn.close()
-    return comparison_data
-
-@st.cache_data
-def get_team_ranking_data(comparison_data, metric, ascending=False, min_matches=1):
-    """Get ranked team data for a specific metric"""
-    ranked_data = []
-    
-    for team, stats in comparison_data.items():
-        if stats['matches_played'] >= min_matches and metric in stats:
-            ranked_data.append({
-                'team': team,
-                'value': stats[metric],
-                'matches_played': stats['matches_played']
-            })
-    
-    ranked_df = pd.DataFrame(ranked_data)
-    if not ranked_df.empty:
-        ranked_df = ranked_df.sort_values('value', ascending=ascending)
-    
-    return ranked_df
 
 # ------------------------------
 # Helper Functions
@@ -448,141 +134,6 @@ def display_team_header(team_name):
             st.write("Flag")
     with col_text:
         st.markdown(f"### {team_name}")
-
-def plot_heatmap(df, event_type, title):
-    """Matplotlib heatmap overlaid on soccer field image"""
-    event_df = df[df["type"].str.contains(event_type, case=False, na=False)].copy()
-
-    if event_df.empty:
-        st.warning(f"No {event_type} data available")
-        return
-    
-    if "location" not in event_df.columns:
-        st.warning(f"No location data available for {event_type}")
-        return
-
-    # Parse location data
-    event_df["x"] = event_df["location"].apply(
-        lambda s: float(s.strip("[]").split(",")[0]) if pd.notnull(s) and s else np.nan
-    )
-    event_df["y"] = event_df["location"].apply(
-        lambda s: float(s.strip("[]").split(",")[1]) if pd.notnull(s) and s else np.nan
-    )
-    
-    # Drop rows with NaN coordinates
-    event_df = event_df.dropna(subset=["x", "y"])
-    
-    if event_df.empty:
-        st.warning(f"No valid location data for {event_type}")
-        return
-
-    fig, ax = plt.subplots(figsize=(6, 4))
-    
-    if os.path.exists(FIELD_IMAGE_PATH):
-        try:
-            img = plt.imread(FIELD_IMAGE_PATH)
-            ax.imshow(img, extent=[0, 120, 0, 80], alpha=0.5)
-        except Exception as e:
-            print(f"Error loading field image: {e}")
-    
-    # Create heatmap
-    heatmap, xedges, yedges = np.histogram2d(
-        event_df["x"].values, 
-        event_df["y"].values, 
-        bins=50, 
-        range=[[0, 120], [0, 80]]
-    )
-    
-    # Only plot if there's data
-    if heatmap.max() > 0:
-        ax.imshow(heatmap.T, extent=[0, 120, 0, 80], origin="lower", cmap="turbo", alpha=0.6)
-    
-    ax.set_xticks([])
-    ax.set_yticks([])
-    ax.set_title(title, fontsize=11, fontweight='bold')
-    st.pyplot(fig)
-    plt.close()
-
-def plot_animated_pass_heatmap(match_id, start_minute, end_minute):
-    """Plot pass heatmap for a specific time interval"""
-    df_passes = get_passes_by_interval(match_id, start_minute, end_minute)
-    
-    if df_passes.empty:
-        st.info(f"No passes recorded in minutes {start_minute}-{end_minute}")
-        return
-    
-    # Parse location data
-    df_passes["x"] = df_passes["location"].apply(
-        lambda s: float(s.strip("[]").split(",")[0]) if pd.notnull(s) and s else np.nan
-    )
-    df_passes["y"] = df_passes["location"].apply(
-        lambda s: float(s.strip("[]").split(",")[1]) if pd.notnull(s) and s else np.nan
-    )
-    
-    # Drop rows with NaN coordinates
-    df_passes = df_passes.dropna(subset=["x", "y"])
-    
-    if df_passes.empty:
-        st.info(f"No valid pass locations in minutes {start_minute}-{end_minute}")
-        return
-    
-    # Create figure
-    fig, ax = plt.subplots(figsize=(12, 8))
-    
-    # Load and display soccer field image as background
-    if os.path.exists(FIELD_IMAGE_PATH):
-        try:
-            img = plt.imread(FIELD_IMAGE_PATH)
-            ax.imshow(img, extent=[0, 120, 0, 80], aspect='auto', alpha=0.5)
-        except Exception as e:
-            print(f"Error loading field image: {e}")
-    
-    # Create heatmap
-    heatmap, xedges, yedges = np.histogram2d(
-        df_passes["x"].values,
-        df_passes["y"].values,
-        bins=50,
-        range=[[0, 120], [0, 80]]
-    )
-    
-    # Only plot if there's data
-    if heatmap.max() > 0:
-        im = ax.imshow(
-            heatmap.T,
-            extent=[0, 120, 0, 80],
-            origin="lower",
-            cmap="YlOrRd",
-            alpha=0.7,
-            interpolation='bilinear'
-        )
-        
-        # Add colorbar
-        cbar = plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
-        cbar.set_label('Number of Passes', rotation=270, labelpad=15)
-    
-    # Styling
-    ax.set_xlim(0, 120)
-    ax.set_ylim(0, 80)
-    ax.set_xticks([])
-    ax.set_yticks([])
-    ax.set_title(
-        f"Pass Heatmap: Minutes {start_minute}-{end_minute} ({len(df_passes)} passes)",
-        fontsize=14,
-        fontweight='bold',
-        pad=20
-    )
-    
-    # Add match time indicator
-    ax.text(
-        60, -5,
-        f"⏱️ Match Time: {start_minute}' - {end_minute}'",
-        ha='center',
-        fontsize=12,
-        bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5)
-    )
-    
-    st.pyplot(fig)
-    plt.close()
 
 def plot_interactive_shot_map(df_shots, team_name):
     """Interactive shot map with xG values on hover using Plotly"""
@@ -899,11 +450,10 @@ if selected_page == "Home":
     st.markdown("""
     This dashboard uses **StatsBomb Open Data** for UEFA Euro 2020, which includes:
     - 51 tournament matches
-    - 192,692+ event records
-    - 2.5+ million tracking frames
-    - Comprehensive xG calculations for all shots
+    - 192,692 event records
+    - 24 teams
     
-    **License:** CC BY-NC 4.0 (Non-Commercial Use)
+    **License:** MIT
     """)
 
 # ------------------------------
