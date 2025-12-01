@@ -575,7 +575,7 @@ def plot_animated_pass_heatmap(match_id, start_minute, end_minute):
     # Add match time indicator
     ax.text(
         60, -5,
-        f"⏱️ Match Time: {start_minute}' - {end_minute}'",
+        f"Match Time: {start_minute}' - {end_minute}'",
         ha='center',
         fontsize=12,
         bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5)
