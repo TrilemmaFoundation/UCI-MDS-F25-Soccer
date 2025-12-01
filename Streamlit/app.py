@@ -61,13 +61,13 @@ st.markdown("""
 # ------------------------------
 # 1. Database Connection
 # ------------------------------
-DB_PATH = "/Users/indrajeet/Documents/Compsci 296p/UCI-MDS-F25-Soccer/statsbomb_euro2020.db"
-FLAGS_PATH = "/Users/indrajeet/Documents/Compsci 296p/UCI-MDS-F25-Soccer/imgs"
-FIELD_IMAGE_PATH = "/Users/indrajeet/Documents/Compsci 296p/UCI-MDS-F25-Soccer/imgs/soccer-field.jpg"
-FIELD_TILT_CSV_PATH = "/Users/indrajeet/Documents/Compsci 296p/UCI-MDS-F25-Soccer/metrics/PPDA_FieldTilt/field_tilt_per_match.csv"
-PPDA_CSV_PATH = "/Users/indrajeet/Documents/Compsci 296p/UCI-MDS-F25-Soccer/metrics/PPDA_FieldTilt/ppda_per_match.csv"
-FIELD_TILT_AVG_CSV_PATH = "/Users/indrajeet/Documents/Compsci 296p/UCI-MDS-F25-Soccer/metrics/PPDA_FieldTilt/field_tilt_team_average.csv"
-PPDA_AVG_CSV_PATH = "/Users/indrajeet/Documents/Compsci 296p/UCI-MDS-F25-Soccer/metrics/PPDA_FieldTilt/ppda_team_average.csv"
+DB_PATH = "../statsbomb/statsbomb_euro2020.db"
+FLAGS_PATH = "../imgs"
+FIELD_IMAGE_PATH = "../imgs/soccer-field.jpg"
+FIELD_TILT_CSV_PATH = "../metrics/PPDA_FieldTilt/field_tilt_per_match.csv"
+PPDA_CSV_PATH = "../metrics/PPDA_FieldTilt/ppda_per_match.csv"
+FIELD_TILT_AVG_CSV_PATH = "../metrics/PPDA_FieldTilt/field_tilt_team_average.csv"
+PPDA_AVG_CSV_PATH = "../metrics/PPDA_FieldTilt/ppda_team_average.csv"
 
 # ------------------------------
 # Country to Flag Mapping
