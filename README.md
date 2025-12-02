@@ -2,9 +2,52 @@
 
 UC Irvine MDS Fall 2025 Soccer Capstone
 
+If you're here, then welcome to our repository! There's still a lot of work to be done, but hopefully you're here to continue this project.
+
+Contents
+- [Repository Explanation](#repository-explanation)
+	- [The Notebooks Folder](#the-notebooks-folder)
+- [Setup with uv](#setup-with-uv)
+- [About the team](#about-the-team)
+
+## Repository Explanation
+To begin with, here is a quick rundown of our repository:  
+`Streamlit/` : Includes Streamlit app script and relevant scripts. Currently does not implement anything from `scripts/` (this could be future work).  
+`imgs/` : Includes flag images and an image of a field. The field image might be replaceable with a library such as `mplsoccer`.  
+`metrics/` : Includes notebooks and scripts related to xG, xT, PPDA, and Field Tilt metric calculations. Many of the final outputs are saved as csv files; future work could include converting these into scripts (unsure if this is done by us as of writing this README) and using the scripts to dynamically update the streamlit app.  
+`notebooks/` : I'll come back to this, but it has exploration notebooks.  
+`scripts/` : Has script (`*.py`) files for computing metrics.
+
+### The Notebooks Folder
+There is a bit in each notebook.  
+- To begin with, `exploration.ipynb` has a lot of random stuff to begin with (currently it has my tests from writing `scripts/compute_xT.py`) but ends with a visualization of how long the teams lasted in the Euro UEFA 2020 tournament.  
+- `change_pt_detection.ipynb` and `change_pt_example.ipynb` both have examples of **change point detection**. This is something that we wanted to implement but ended up abandoning due to 1) limited data, 2) limited time, and 3) too much hyperparameter tuning. The original goal was to find change points in a game or change points across a season based on xG (very few shots per game, so it doesn't work) or other metrics (e.g., passes per 5 minute interval). You might also need to deal with the assumption that the data is Gaussian at some point. Finally, the event correlation in `change_pt_example.ipynb` is an initial pass at trying to give "importance" to events that occur near a detected change point. This could be future work.  
+- `Heatmap.ipynb` has the initial pass of creating heatmaps for the streamlit app.  
+- `kloppy_exploration.ipynb` includes an exploration of the `kloppy` API as a data source, where it largely follows the getting-started guide for Kloppy. Enjoy my crashout at the broken documentation; I have working code for you. Future work could include integrating the `kloppy` API to dynamically call more data as needed for the dashboard or for training the models (xG, xT). You could also replace our heatmap code with "prettier" (maybe) heatmaps from `mplsoccer`.
+
+And that's it! Now you should be equipped to explore our repository.
+
+## Setup with uv
+If you're comfortable using virtual environments, feel free to switch to your preferred package manager. You could also just `pip install` every package in `pyproject.toml`. Otherwise, consider using `uv` instead of conda! It's extremely fast (written in Rust), and I (Tim) have been using it since July 2025 and will never return to the dark days of conda.
+
+To begin with, download uv at [https://docs.astral.sh/uv/](https://docs.astral.sh/uv/). In a terminal (git bash or MSYS2 on Windows), navigate to this directory and enter the command
+```
+uv sync
+```
+to create the virtual environment and install the packages locally. Then, when you're ready to activate the virtual environment, run
+```
+source .venv/Scripts/activate
+```
+If you're running on a Mac or Linux machine, it might be
+```
+source .venv/bin/activate
+```
+
+And run python scripts from there. I'm not sure how to get uv working in a notebook, but I'm sure you can figure it out.
+
 ## About the team
 
-We are all Master of Data Science students at the University of California Irvine, but here's a bit about the individual members.
+We are all Master of Data Science students at the University of California Irvine (graduating in December 2025), but here's a bit about the individual members.
 
 <img src="https://raw.githubusercontent.com/timng-gnmit/timng-gnmit/refs/heads/main/tim.png" alt="Timothy Ng" width="200"/>  
 
