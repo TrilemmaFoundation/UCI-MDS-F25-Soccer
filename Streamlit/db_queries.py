@@ -278,43 +278,68 @@ def get_team_comparison_data():
             continue
 
         match_ids_str = ",".join(map(str, match_ids))
-        stats_query = f"""
-            WITH team_events AS (
-                SELECT * FROM events
-                WHERE match_id IN ({match_ids_str})
-                AND team = '{team}'
-            )
-            SELECT 
-                COUNT(*) as total_events,
-                COUNT(CASE WHEN type = 'Pass' THEN 1 END) as total_passes,
-                COUNT(CASE WHEN type = 'Shot' THEN 1 END) as total_shots,
-                COUNT(CASE WHEN type = 'Shot' AND shot_outcome = 'Goal' THEN 1 END) as goals_scored,
-                COUNT(CASE WHEN type = 'Pass' AND pass_assisted_shot_id IS NOT NULL THEN 1 END) as assists,
-                COUNT(CASE WHEN type = 'Duel' AND duel_outcome = 'Won' THEN 1 END) as duels_won,
-                COUNT(CASE WHEN type = 'Interception' THEN 1 END) as interceptions,
-                COUNT(CASE WHEN type = 'Foul Committed' THEN 1 END) as fouls_committed,
-                COUNT(CASE WHEN type = 'Foul Won' THEN 1 END) as fouls_won,
-                ROUND(SUM(CASE WHEN type = 'Shot' THEN shot_statsbomb_xg END), 3) as total_xg,
-                ROUND(AVG(CASE WHEN type = 'Shot' THEN shot_statsbomb_xg END), 3) as avg_shot_xg,
-                COUNT(CASE WHEN type = 'Pass' AND pass_outcome IS NULL THEN 1 END) * 100.0 /
-                    NULLIF(COUNT(CASE WHEN type = 'Pass' THEN 1 END), 0) as pass_accuracy
-            FROM team_events;
-        """
-        stats_df = pd.read_sql_query(stats_query, conn)
 
-        if not stats_df.empty:
-            stats = stats_df.iloc[0].to_dict()
-            stats['matches_played'] = len(match_ids)
-            stats['scoring_accuracy'] = (
-                stats['goals_scored'] / stats['total_shots'] * 100 if stats['total_shots'] > 0 else 0
-            )
-            stats['xg_efficiency'] = (
-                stats['goals_scored'] / stats['total_xg'] if stats['total_xg'] > 0 else 0
-            )
-            stats['goals_per_match'] = (
-                stats['goals_scored'] / stats['matches_played'] if stats['matches_played'] > 0 else 0
-            )
-            comparison_data[team] = stats
+        # all event rows for this team
+        events_query = f"""
+            SELECT * FROM events
+            WHERE match_id IN ({match_ids_str})
+            AND team = '{team}';
+        """
+        events_df = pd.read_sql_query(events_query, conn)
+
+        total_events = len(events_df)
+        total_passes = (events_df["type"] == "Pass").sum()
+        total_shots = (events_df["type"] == "Shot").sum()
+        goals_scored = (
+            (events_df["type"] == "Shot") & (events_df["shot_outcome"] == "Goal")
+        ).sum()
+        assists = (
+            (events_df["type"] == "Pass") & events_df["pass_assisted_shot_id"].notna()
+        ).sum()
+        duels_won = (
+            (events_df["type"] == "Duel") & (events_df["duel_outcome"] == "Won")
+        ).sum()
+        interceptions = (events_df["type"] == "Interception").sum()
+        fouls_committed = (events_df["type"] == "Foul Committed").sum()
+        fouls_won = (events_df["type"] == "Foul Won").sum()
+
+        # compute model xG using model
+        shots_df = events_df[events_df["type"] == "Shot"].copy()
+        shots_df = preprocess_shots(shots_df)
+        shots_df["xg"] = pipeline.predict_proba(shots_df[XG_FEATURES])[:, 1]
+        total_xg = shots_df["xg"].sum()
+        avg_shot_xg = shots_df["xg"].mean() if not shots_df["xg"].empty else 0
+
+        matches_played = len(match_ids)
+        scoring_accuracy = goals_scored / total_shots * 100 if total_shots > 0 else 0
+        xg_efficiency = (goals_scored / total_xg) if total_xg > 0 else 0
+        goals_per_match = goals_scored / matches_played if matches_played > 0 else 0
+        pass_accuracy = (
+            (events_df["type"].eq("Pass") & events_df["pass_outcome"].isna()).sum()
+            * 100.0
+            / total_passes
+            if total_passes > 0
+            else 0
+        )
+
+        comparison_data[team] = {
+            "total_events": total_events,
+            "total_passes": total_passes,
+            "total_shots": total_shots,
+            "goals_scored": goals_scored,
+            "assists": assists,
+            "duels_won": duels_won,
+            "interceptions": interceptions,
+            "fouls_committed": fouls_committed,
+            "fouls_won": fouls_won,
+            "total_xg": round(total_xg, 3),
+            "avg_shot_xg": round(avg_shot_xg, 3),
+            "pass_accuracy": pass_accuracy,
+            "matches_played": matches_played,
+            "scoring_accuracy": scoring_accuracy,
+            "xg_efficiency": xg_efficiency,
+            "goals_per_match": goals_per_match,
+        }
 
     conn.close()
     return comparison_data
