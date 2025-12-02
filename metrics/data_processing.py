@@ -16,11 +16,15 @@ import math
 import os
 import sqlite3
 
+import numpy as np
 import pandas as pd
 
 STATSBOMB_DIR = "data/statsbomb"
 GOAL_X, GOAL_Y = 120, 40
 GOAL_LEFT_Y, GOAL_RIGHT_Y = 36, 44  # 8 yards apart
+goal_left = np.array([120, 36])
+goal_right = np.array([120, 44])
+c = np.hypot(goal_left[0] - goal_right[0], goal_left[1] - goal_right[1])  # constant
 
 
 def compute_distance(x, y):
@@ -39,6 +43,36 @@ def compute_angle(x, y):
     return angle
 
 
+def compute_distance_vec(x, y):
+    return np.hypot(GOAL_X - x, GOAL_Y - y)
+
+
+def compute_angle_vec(x, y):
+    a = np.hypot(goal_left[0] - x, goal_left[1] - y)
+    b = np.hypot(goal_right[0] - x, goal_right[1] - y)
+
+    cos_theta = (a * a + b * b - c * c) / (2 * a * b)
+    return np.arccos(np.clip(cos_theta, -1, 1))
+
+
+def count_players(freeze):
+    if not freeze:  # handles empty list, None, "", etc.
+        return (0, 0)
+
+    num_teammates = sum(1 for p in freeze if p.get("teammate"))
+    num_opponents = len(freeze) - num_teammates
+    return (num_teammates, num_opponents)
+
+
+def safe_json_list(s):
+    if not s:  # catches "", None, NaN
+        return []
+    try:
+        return json.loads(s)
+    except json.JSONDecodeError:
+        return []
+
+
 def extract_shots(match_file: str):
     with open(match_file, "r", encoding="utf-8") as f:
         data = json.load(f)
@@ -51,10 +85,7 @@ def extract_shots(match_file: str):
         dist = compute_distance(x, y)
         angle = compute_angle(x, y)
         shot = ev["shot"]
-
-        freeze = shot.get("freeze_frame", [])
-        num_teammates = sum(1 for p in freeze if p.get("teammate"))
-        num_opponents = len(freeze) - num_teammates
+        num_teammates, num_opponents = count_players(shot.get("freeze_frame", []))
 
         shots.append(
             {
@@ -65,8 +96,8 @@ def extract_shots(match_file: str):
                 "y": y,
                 "distance": dist,
                 "angle": angle,
-                "body_part": shot["body_part"]["name"],
-                "technique": shot["technique"]["name"],
+                "shot_body_part": shot["body_part"]["name"],
+                "shot_technique": shot["technique"]["name"],
                 "shot_type": shot["type"]["name"],
                 "play_pattern": ev["play_pattern"]["name"],
                 "num_teammates": num_teammates,
@@ -106,19 +137,11 @@ def extract_shots_from_db(db_path: str) -> pd.DataFrame:
     for row in rows:
         ev = dict(zip(cols, row))
         x, y = json.loads(ev["location"])
-
         dist = compute_distance(x, y)
         angle = compute_angle(x, y)
-
-        num_teammates = num_opponents = None
-        if ev.get("shot_freeze_frame"):
-            try:
-                freeze = json.loads(ev["shot_freeze_frame"])
-                num_teammates = sum(1 for p in freeze if p.get("teammate"))
-                num_opponents = len(freeze) - num_teammates
-            except Exception:
-                num_teammates = num_opponents = None
-
+        num_teammates, num_opponents = count_players(
+            safe_json_list(ev["shot_freeze_frame"])
+        )
         goal_flag = 1 if ev.get("shot_outcome") == "Goal" else 0
 
         shots.append(
@@ -130,8 +153,8 @@ def extract_shots_from_db(db_path: str) -> pd.DataFrame:
                 "y": y,
                 "distance": dist,
                 "angle": angle,
-                "body_part": ev["shot_body_part"],
-                "technique": ev["shot_technique"],
+                "shot_body_part": ev["shot_body_part"],
+                "shot_technique": ev["shot_technique"],
                 "shot_type": ev["shot_type"],
                 "play_pattern": ev["play_pattern"],
                 "num_teammates": num_teammates,
@@ -249,6 +272,82 @@ def statsbomb_load_league_xt(
     return all_events
 
 
+def load_match_xt_events(db_path: str, match_id: int):
+    conn = sqlite3.connect(db_path)
+    cur = conn.cursor()
+
+    query = """
+        SELECT
+            type,
+            player_id,
+            player,
+            location,
+            pass_end_location,
+            carry_end_location,
+            shot_statsbomb_xg
+        FROM events
+        WHERE match_id = ?
+        AND type IN ('Pass', 'Carry', 'Shot')
+        ORDER BY index_num;
+    """
+
+    rows = cur.execute(query, (match_id,)).fetchall()
+    conn.close()
+
+    xt_events = []
+
+    for t, player_id, player_name, loc, pass_end, carry_end, xg in rows:
+        try:
+            loc = json.loads(loc) if loc else None
+        except:
+            loc = None
+
+        if t == "Pass":
+            try:
+                end_loc = json.loads(pass_end) if pass_end else None
+            except:
+                end_loc = None
+
+            xt_events.append(
+                {
+                    "type": "Pass",
+                    "player_id": player_id,
+                    "player": player_name,
+                    "location": loc,
+                    "end_location": end_loc,
+                }
+            )
+
+        elif t == "Carry":
+            try:
+                end_loc = json.loads(carry_end) if carry_end else None
+            except:
+                end_loc = None
+
+            xt_events.append(
+                {
+                    "type": "Carry",
+                    "player_id": player_id,
+                    "player": player_name,
+                    "location": loc,
+                    "end_location": end_loc,
+                }
+            )
+
+        elif t == "Shot":
+            xt_events.append(
+                {
+                    "type": "Shot",
+                    "player_id": player_id,
+                    "player": player_name,
+                    "location": loc,
+                    "xg": float(xg) if xg is not None else 0.0,
+                }
+            )
+
+    return xt_events
+
+
 if __name__ == "__main__":
     # xg
     # Germany league 2023/2024
@@ -295,3 +394,6 @@ if __name__ == "__main__":
     statsbomb_load_league_xt(
         "2/27.json", out_jsonl="England_xt.jsonl", out_dir="output"
     )
+    # events = load_match_xt_events("data/statsbomb_euro2020.db", 3794686)
+    # with open("3794686xt_events.json", "w") as f:
+    #     json.dump(events, f)
