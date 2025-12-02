@@ -18,6 +18,8 @@ To begin with, here is a quick rundown of our repository:
 `notebooks/` : I'll come back to this, but it has exploration notebooks.  
 `scripts/` : Has script (`*.py`) files for computing metrics.
 
+One folder that is referenced in various files but not included with any of the git pushes is a `statsbomb/` folder which includes `DATABASE_SPECIFICATION.md` and `statsbomb_euro2020.db`. This is different from the layout described in `metrics/data_processing.py`, but if you're cloning the repo to continue this project, try having consistency across the group lol.
+
 ### The Notebooks Folder
 There is a bit in each notebook.  
 - To begin with, `exploration.ipynb` has a lot of random stuff to begin with (currently it has my tests from writing `scripts/compute_xT.py`) but ends with a visualization of how long the teams lasted in the Euro UEFA 2020 tournament.  
@@ -28,7 +30,7 @@ There is a bit in each notebook.
 And that's it! Now you should be equipped to explore our repository.
 
 ## Setup with uv
-If you're comfortable using virtual environments, feel free to switch to your preferred package manager. You could also just `pip install` every package in `pyproject.toml`. Otherwise, consider using `uv` instead of conda! It's extremely fast (written in Rust), and I (Tim) have been using it since July 2025 and will never return to the dark days of conda.
+If you're comfortable using virtual environments, feel free to switch to your preferred package manager. You could also just `pip install` every package in `pyproject.toml`. Otherwise, consider using uv instead of conda! It's extremely fast (written in Rust), and I (Tim) have been using it since July 2025 and will never return to the dark days of conda.
 
 To begin with, download uv at [https://docs.astral.sh/uv/](https://docs.astral.sh/uv/). In a terminal (git bash or MSYS2 on Windows), navigate to this directory and enter the command
 ```
@@ -47,7 +49,7 @@ And run python scripts from there. I'm not sure how to get uv working in a noteb
 
 ## About the team
 
-We are all Master of Data Science students at the University of California Irvine (graduating in December 2025), but here's a bit about the individual members.
+We are all Master of Data Science students at the University of California, Irvine (graduating in December 2025), but here's a bit about the individual members.
 
 <img src="https://raw.githubusercontent.com/timng-gnmit/timng-gnmit/refs/heads/main/tim.png" alt="Timothy Ng" width="200"/>  
 
