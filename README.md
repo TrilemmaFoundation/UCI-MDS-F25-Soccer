@@ -2,7 +2,7 @@
 
 UC Irvine MDS Fall 2025 Soccer Capstone
 
-If you're here, then welcome to our repository! There's still a lot of work to be done, but hopefully you're here to continue this project.
+If you're here, then welcome to our repository! There's still a lot of work to be done, but maybe you're here to continue this project.
 
 Contents
 - [Repository Explanation](#repository-explanation)
