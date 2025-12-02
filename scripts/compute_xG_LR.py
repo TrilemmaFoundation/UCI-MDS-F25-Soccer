@@ -76,6 +76,7 @@ def get_xG_preds(pipeline, dataframe):
     dataframe : pandas.DataFrame
         The dataframe with the correct column names for the pipeline. 
         You might need to call extract_shots_from_db or just make this function better lol
+        Oh right also remove na with df.dropna(how="any")
 
     Returns
     -------
