@@ -723,88 +723,116 @@ elif selected_page == "Team Analysis" and selected_team:
                         f"**{selected_team}** is ranked **#{rank_position}** out of **{total_teams}** teams "
                         f"in {metric_names[comparison_metric]} with a value of **{formatted_value}**"
                     )
+
+            with tab3:
+                # Tournament Rankings
+                st.markdown("## Tournament Leaderboards")
                 
-    with tab3:
-        # Tournament Rankings
-        st.markdown("## Tournament Leaderboards")
-        
-        # Define ranking categories
-        ranking_categories = {
-            "attack": ["goals_scored", "goals_per_match", "scoring_accuracy", "total_xg", "xg_efficiency"],
-            "possession": ["total_passes", "pass_accuracy"],
-            "defense": ["duels_won", "interceptions"]
-        }
-        
-        category = st.selectbox(
-            "Select Category",
-            ["attack", "possession", "defense"],
-            format_func=lambda x: {
-                "attack": "⚽ Attacking Metrics",
-                "possession": "🎯 Possession Metrics", 
-                "defense": "🛡️ Defensive Metrics"
-            }[x]
-        )
-        
-        st.markdown(f"### Top 5 Teams - {category.title()} Metrics")
-        
-        for metric in ranking_categories[category]:
-            ranked_df = get_team_ranking_data(comparison_data, metric, metric in ["ppda"])
-            
-            if not ranked_df.empty:
-                top_5 = ranked_df.head(5)
-                
-                metric_names = {
-                    "goals_scored": "Total Goals",
-                    "goals_per_match": "Goals per Match",
-                    "scoring_accuracy": "Scoring Accuracy",
-                    "total_xg": "Total xG",
-                    "xg_efficiency": "xG Efficiency",
-                    "total_passes": "Total Passes",
-                    "pass_accuracy": "Pass Accuracy",
-                    "duels_won": "Duels Won",
-                    "interceptions": "Interceptions"
+                # Define ranking categories
+                ranking_categories = {
+                    "attacking": ["goals_scored", "goals_per_match", "scoring_accuracy", "total_xg", "xg_efficiency"],
+                    "possession": ["total_passes", "pass_accuracy"],
+                    "defensive": ["duels_won", "interceptions"]
                 }
                 
-                col1, col2 = st.columns([3, 2])
+                category = st.selectbox(
+                    "Select Category",
+                    ["attacking", "possession", "defensive"],
+                    format_func=lambda x: {
+                        "attacking": "Attacking Metrics",
+                        "possession": "Possession Metrics", 
+                        "defensive": "Defensive Metrics"
+                    }[x]
+                )
                 
-                with col1:
-                    st.markdown(f"{metric_names[metric]}")
-                    for i, (_, row) in enumerate(top_5.iterrows()):
-                        medal = ["🥇", "🥈", "🥉", "4.", "5."][i]
-
-                        # Format the value based on the metric type
-                        if "accuracy" in metric:
-                            formatted_value = f"{row['value']:.1f}%"
-                        elif "xg" in metric or "efficiency" in metric:
-                            formatted_value = f"{row['value']:.3f}"
+                st.markdown(f"### Top 5 Teams - {category.title()}")
+                
+                for metric in ranking_categories[category]:
+                    # Get ranking data
+                    ascending_metrics = ["ppda"]  # Only PPDA should be ascending (lower is better)
+                    ascending_order = metric in ascending_metrics
+                    
+                    if metric in comparison_data.get(selected_team, {}):
+                        # Create a list of teams with the metric value
+                        team_values = []
+                        for team, stats in comparison_data.items():
+                            if metric in stats:
+                                team_values.append({
+                                    'team': team,
+                                    'value': stats[metric],
+                                    'matches_played': stats['matches_played']
+                                })
+                        
+                        # Sort the list
+                        if ascending_order:
+                            team_values.sort(key=lambda x: x['value'])
                         else:
-                            formatted_value = f"{row['value']:.0f}"
-
-                        st.write(f"{medal} {row['team']} - {formatted_value}")
-                
-                with col2:
-                    # Show selected team's position if in top 20
-                    selected_team_rank = ranked_df[ranked_df['team'] == selected_team].index
-                    if not selected_team_rank.empty:
-                        rank_position = selected_team_rank[0] + 1
-                        if rank_position <= 20:
-                            team_value = ranked_df[ranked_df['team'] == selected_team]['value'].iloc[0]
+                            team_values.sort(key=lambda x: x['value'], reverse=True)
+                        
+                        if team_values:
+                            top_5 = team_values[:5]
                             
-                            # Format the value based on the metric type
-                            if "accuracy" in metric:
-                                formatted_team_value = f"{team_value:.1f}%"
-                            elif "xg" in metric or "efficiency" in metric:
-                                formatted_team_value = f"{team_value:.3f}"
-                            else:
-                                formatted_team_value = f"{team_value:.0f}"
+                            metric_names = {
+                                "goals_scored": "Total Goals",
+                                "goals_per_match": "Goals per Match",
+                                "scoring_accuracy": "Scoring Accuracy",
+                                "total_xg": "Total Expected Goals (xG)",
+                                "xg_efficiency": "Expected Goals Efficiency",
+                                "total_passes": "Total Passes",
+                                "pass_accuracy": "Pass Accuracy",
+                                "duels_won": "Duels Won",
+                                "interceptions": "Interceptions"
+                            }
                             
-                            st.metric(
-                                f"{selected_team} Rank", 
-                                f"#{rank_position}",
-                                f"Value: {formatted_team_value}"
-            )
-                
-                st.markdown("---")
+                            col1, col2 = st.columns([3, 2])
+                            
+                            with col1:
+                                st.markdown(f"**{metric_names[metric]}**")
+                                for i, team_data in enumerate(top_5):
+                                    rank_display = f"{i+1}."  # Simple numbering without emojis
+                                    
+                                    # Format the value based on the metric type
+                                    if "accuracy" in metric:
+                                        formatted_value = f"{team_data['value']:.1f}%"
+                                    elif "xg" in metric or "efficiency" in metric:
+                                        formatted_value = f"{team_data['value']:.3f}"
+                                    else:
+                                        formatted_value = f"{team_data['value']:.0f}"
+                                    
+                                    # Highlight selected team
+                                    if team_data['team'] == selected_team:
+                                        st.write(f"**{rank_display} {team_data['team']} - {formatted_value}**")
+                                    else:
+                                        st.write(f"{rank_display} {team_data['team']} - {formatted_value}")
+                            
+                            with col2:
+                                # Show selected team's position
+                                selected_team_rank = None
+                                selected_team_value = None
+                                
+                                for i, team_data in enumerate(team_values):
+                                    if team_data['team'] == selected_team:
+                                        selected_team_rank = i + 1
+                                        selected_team_value = team_data['value']
+                                        break
+                                
+                                if selected_team_rank is not None and selected_team_rank <= len(team_values):
+                                    # Format the value based on the metric type
+                                    if "accuracy" in metric:
+                                        formatted_team_value = f"{selected_team_value:.1f}%"
+                                    elif "xg" in metric or "efficiency" in metric:
+                                        formatted_team_value = f"{selected_team_value:.3f}"
+                                    else:
+                                        formatted_team_value = f"{selected_team_value:.0f}"
+                                    
+                                    # Display team's rank
+                                    st.metric(
+                                        f"{selected_team} Rank", 
+                                        f"#{selected_team_rank}",
+                                        f"Value: {formatted_team_value}"
+                                    )
+                            
+                            st.markdown("---")
 
 # ------------------------------
 # 3C. Match Analysis
