@@ -1,6 +1,17 @@
 import sqlite3
 import pandas as pd
 import streamlit as st
+from sklearn.pipeline import Pipeline
+import ast
+from metrics.xg import load_model, XG_FEATURES
+from metrics.data_processing import (
+    compute_distance_vec,
+    compute_angle_vec,
+    count_players,
+    safe_json_list,
+)
+
+pipeline: Pipeline = load_model("../metrics/weights/xg_pipeline.pkl")
 
 # Global DB path
 DB_PATH = "../statsbomb/statsbomb_euro2020.db"
@@ -51,7 +62,7 @@ def get_events(match_id):
 
 
 @st.cache_data
-def get_shots_with_xg(match_id):
+def get_shots_with_xg(match_id, use_custom_xg=True):
     """Return all shots with xG values for a given match."""
     conn = sqlite3.connect(DB_PATH)
     query = f"""
@@ -64,13 +75,28 @@ def get_shots_with_xg(match_id):
             second,
             shot_outcome,
             shot_body_part,
-            shot_technique
+            shot_technique,
+            shot_type,
+            play_pattern,
+            shot_freeze_frame
         FROM events
-        WHERE match_id = {match_id}
-        AND type = 'Shot'
-        AND shot_statsbomb_xg IS NOT NULL;
+        WHERE match_id = {match_id} 
+        AND type = 'Shot';
     """
     df = pd.read_sql_query(query, conn)
+    df[["location_x", "location_y"]] = (
+        df["location"].apply(lambda s: ast.literal_eval(s)).apply(pd.Series)
+    )
+    df = df.assign(
+        distance=lambda d: compute_distance_vec(d["location_x"], d["location_y"]),
+        angle=lambda d: compute_angle_vec(d["location_x"], d["location_y"]),
+    )
+    df["freeze_list"] = df["shot_freeze_frame"].apply(safe_json_list)
+    df[["num_teammates", "num_opponents"]] = df["freeze_list"].apply(count_players).to_list()
+
+    X_new = df[XG_FEATURES]
+    df["xg"] = pipeline.predict_proba(X_new)[:, 1]
+
     conn.close()
     return df
 

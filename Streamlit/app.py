@@ -1,3 +1,11 @@
+import os
+import sys
+
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+if ROOT_DIR not in sys.path:
+    sys.path.insert(0, ROOT_DIR)
+
 import streamlit as st
 import sqlite3
 import pandas as pd
@@ -159,11 +167,13 @@ def plot_interactive_shot_map(df_shots, team_name):
     
     team_shots["hover_text"] = team_shots.apply(
         lambda row: f"<b>{row['player']}</b><br>"
-                   f"xG: {row['shot_statsbomb_xg']:.3f}<br>"
+                   f"statsbomb xG: {row['shot_statsbomb_xg']:.3f}<br>"
+                   f"xG: {row['xg']:.3f}<br>"
                    f"Time: {int(row['minute'])}:{int(row['second']):02d}<br>"
                    f"Outcome: {row['shot_outcome']}<br>"
                    f"Body Part: {row['shot_body_part']}<br>"
-                   f"Technique: {row['shot_technique']}",
+                   f"Technique: {row['shot_technique']}<br>"
+                   f"Shot Type: {row['shot_type']}",
         axis=1
     )
     
@@ -1043,4 +1053,3 @@ elif selected_page == "Match Analysis" and selected_team and selected_match:
             - The heatmap shows **combined passes from both teams**
             - Each interval displays **5 minutes** of match action
             """)
-
