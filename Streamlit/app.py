@@ -36,6 +36,7 @@ from heatmaps import (
     plot_animated_pass_heatmap
 )
 
+from charts import plot_interactive_shot_map
 
 # ------------------------------
 # Page Configuration

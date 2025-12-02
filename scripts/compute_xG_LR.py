@@ -11,6 +11,8 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 import sys
 sys.path.append('../metrics')
+
+# maybe move this function into this script?
 from data_processing import extract_shots_from_db
 
 # train and return the model on the statsbomb euro 2020 data
