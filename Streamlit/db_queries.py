@@ -61,6 +61,21 @@ def get_events(match_id):
     return df
 
 
+def preprocess_shots(df):
+    df[["location_x", "location_y"]] = (
+        df["location"].apply(lambda s: ast.literal_eval(s)).apply(pd.Series)
+    )
+    df = df.assign(
+        distance=lambda d: compute_distance_vec(d["location_x"], d["location_y"]),
+        angle=lambda d: compute_angle_vec(d["location_x"], d["location_y"]),
+    )
+    df["freeze_list"] = df["shot_freeze_frame"].apply(safe_json_list)
+    df[["num_teammates", "num_opponents"]] = (
+        df["freeze_list"].apply(count_players).to_list()
+    )
+    return df
+
+
 @st.cache_data
 def get_shots_with_xg(match_id, use_custom_xg=True):
     """Return all shots with xG values for a given match."""
@@ -84,18 +99,8 @@ def get_shots_with_xg(match_id, use_custom_xg=True):
         AND type = 'Shot';
     """
     df = pd.read_sql_query(query, conn)
-    df[["location_x", "location_y"]] = (
-        df["location"].apply(lambda s: ast.literal_eval(s)).apply(pd.Series)
-    )
-    df = df.assign(
-        distance=lambda d: compute_distance_vec(d["location_x"], d["location_y"]),
-        angle=lambda d: compute_angle_vec(d["location_x"], d["location_y"]),
-    )
-    df["freeze_list"] = df["shot_freeze_frame"].apply(safe_json_list)
-    df[["num_teammates", "num_opponents"]] = df["freeze_list"].apply(count_players).to_list()
-
-    X_new = df[XG_FEATURES]
-    df["xg"] = pipeline.predict_proba(X_new)[:, 1]
+    df = preprocess_shots(df)
+    df["xg"] = pipeline.predict_proba(df[XG_FEATURES])[:, 1]
 
     conn.close()
     return df
@@ -111,13 +116,31 @@ def get_match_summary_stats(match_id, home_team, away_team):
     conn = sqlite3.connect(DB_PATH)
     stats = {}
 
+    query = f"""
+        SELECT 
+            team,
+            location,
+            shot_body_part,
+            shot_technique,
+            shot_type,
+            play_pattern,
+            shot_freeze_frame
+        FROM events
+        WHERE match_id = {match_id} 
+        AND type = 'Shot';
+    """
+    shots_df = pd.read_sql_query(query, conn)
+    shots_df = preprocess_shots(shots_df)
+    shots_df["xg"] = pipeline.predict_proba(shots_df[XG_FEATURES])[:, 1]
+    model_xg = shots_df.groupby("team")["xg"].sum().round(3)
+
     for team in [home_team, away_team]:
         query = f"""
             SELECT 
                 COUNT(CASE WHEN type = 'Pass' THEN 1 END) as passes,
                 COUNT(CASE WHEN type = 'Shot' THEN 1 END) as shots,
                 COUNT(CASE WHEN type = 'Shot' AND shot_outcome = 'Goal' THEN 1 END) as goals,
-                ROUND(SUM(CASE WHEN type = 'Shot' THEN shot_statsbomb_xg END), 3) as total_xg,
+                ROUND(SUM(CASE WHEN type = 'Shot' THEN shot_statsbomb_xg END), 3) as statsbomb_total_xg,
                 COUNT(CASE WHEN type = 'Pass' AND pass_outcome IS NULL THEN 1 END) * 100.0 /
                     NULLIF(COUNT(CASE WHEN type = 'Pass' THEN 1 END), 0) as pass_accuracy,
                 COUNT(CASE WHEN type = 'Duel' THEN 1 END) as duels,
@@ -126,7 +149,9 @@ def get_match_summary_stats(match_id, home_team, away_team):
             WHERE match_id = {match_id} AND team = '{team}';
         """
         df = pd.read_sql_query(query, conn)
-        stats[team] = df.iloc[0].to_dict()
+        row = df.iloc[0].to_dict()
+        row["total_xg"] = float(model_xg.get(team, 0.0))
+        stats[team] = row
 
     conn.close()
     return stats
