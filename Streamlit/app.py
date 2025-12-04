@@ -1038,42 +1038,33 @@ elif selected_page == "Match Analysis" and selected_team and selected_match:
         # Plot the heatmap for selected interval
         plot_animated_pass_heatmap(match_id, start_min, end_min)
         
-        # Add navigation buttons at bottom
-        st.markdown("---")
-        col_btn1, col_btn2, col_btn3, col_btn4 = st.columns(4)
+        # # Add navigation buttons at bottom
+        # st.markdown("---")
+        # col_btn1, col_btn2, col_btn3, col_btn4 = st.columns(4)
         
-        with col_btn1:
-            if st.button("⏪ Previous Interval", width='stretch', disabled=(time_interval == 0)):
-                st.session_state.time_interval = max(0, time_interval - 5)
-                st.rerun()
+        # with col_btn1:
+        #     if st.button("⏪ Previous Interval", use_container_width=True, disabled=(time_interval == 0)):
+        #         st.session_state.time_interval = max(0, time_interval - 5)
+        #         st.rerun()
         
-        with col_btn2:
-            if st.button("⏸️ First Half", width='stretch'):
-                st.session_state.time_interval = 0
-                st.rerun()
+        # with col_btn2:
+        #     if st.button("⏸️ First Half", use_container_width=True):
+        #         st.session_state.time_interval = 0
+        #         st.rerun()
         
-        with col_btn3:
-            if st.button("⏯️ Second Half", width='stretch'):
-                st.session_state.time_interval = 45
-                st.rerun()
+        # with col_btn3:
+        #     if st.button("⏯️ Second Half", use_container_width=True):
+        #         st.session_state.time_interval = 45
+        #         st.rerun()
         
-        with col_btn4:
-            if st.button("⏩ Next Interval", width='stretch', disabled=(time_interval >= match_duration - 5)):
-                st.session_state.time_interval = min(match_duration - 5, time_interval + 5)
-                st.rerun()
+        # with col_btn4:
+        #     if st.button("⏩ Next Interval", use_container_width=True, disabled=(time_interval >= match_duration - 5)):
+        #         st.session_state.time_interval = min(match_duration - 5, time_interval + 5)
+        #         st.rerun()
         
         # Add legend/info box
         with st.expander("ℹ️ How to Use"):
             st.markdown("""
-            **Controls:**
-            - 🎚️ **Slider**: Drag to jump to any 5-minute interval
-            - ⏮️ **Reset**: Jump to start of match (0-5 min)
-            - ⏭️ **End**: Jump to final interval
-            - ⏪ **Previous**: Go back one interval (5 minutes)
-            - ⏩ **Next**: Go forward one interval (5 minutes)
-            - ⏸️ **First Half**: Jump to start of first half (0-5 min)
-            - ⏯️ **Second Half**: Jump to start of second half (45-50 min)
-            
             **Understanding the Heatmap:**
             - 🔴 **Red/Orange areas**: High concentration of passes
             - 🟡 **Yellow areas**: Moderate pass activity
