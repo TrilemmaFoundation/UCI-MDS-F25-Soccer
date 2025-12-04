@@ -227,7 +227,7 @@ def plot_interactive_shot_map(df_shots, team_name):
         margin=dict(l=0, r=0, t=0, b=0)
     )
     
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width='stretch')
 
 def create_interval_chart(df, y_col, title, ylabel, color1='#1f77b4', color2='#ff7f0e'):
     """Create a clean interval chart"""
@@ -259,7 +259,7 @@ def create_interval_chart(df, y_col, title, ylabel, color1='#1f77b4', color2='#f
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
     )
     
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width='stretch')
 
 # ------------------------------
 # 2. Sidebar UI
@@ -579,7 +579,7 @@ elif selected_page == "Team Analysis" and selected_team:
                 player_tab1, player_tab2 = st.tabs(["Full Statistics", "Top Performers"])
                 
                 with player_tab1:
-                    st.dataframe(df_players, use_container_width=True, hide_index=True)
+                    st.dataframe(df_players, width='stretch', hide_index=True)
                 
                 with player_tab2:
                     col1, col2, col3, col4 = st.columns(4)
@@ -702,7 +702,7 @@ elif selected_page == "Team Analysis" and selected_team:
                     showlegend=False
                 )
                 
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width='stretch')
 
                 # Show selected team's position
                 selected_team_info = ranked_df[ranked_df['team'] == selected_team]
@@ -998,7 +998,7 @@ elif selected_page == "Match Analysis" and selected_team and selected_match:
         col1, col2, col3 = st.columns([1, 6, 1])
         
         with col1:
-            if st.button("⏮️ Reset", use_container_width=True):
+            if st.button("⏮️ Reset", width='stretch'):
                 st.session_state.time_interval = 0
                 st.rerun()
         
@@ -1016,7 +1016,7 @@ elif selected_page == "Match Analysis" and selected_team and selected_match:
             st.session_state.time_interval = time_interval
         
         with col3:
-            if st.button("⏭️ End", use_container_width=True):
+            if st.button("⏭️ End", width='stretch'):
                 st.session_state.time_interval = match_duration - 5
                 st.rerun()
         
@@ -1043,22 +1043,22 @@ elif selected_page == "Match Analysis" and selected_team and selected_match:
         col_btn1, col_btn2, col_btn3, col_btn4 = st.columns(4)
         
         with col_btn1:
-            if st.button("⏪ Previous Interval", use_container_width=True, disabled=(time_interval == 0)):
+            if st.button("⏪ Previous Interval", width='stretch', disabled=(time_interval == 0)):
                 st.session_state.time_interval = max(0, time_interval - 5)
                 st.rerun()
         
         with col_btn2:
-            if st.button("⏸️ First Half", use_container_width=True):
+            if st.button("⏸️ First Half", width='stretch'):
                 st.session_state.time_interval = 0
                 st.rerun()
         
         with col_btn3:
-            if st.button("⏯️ Second Half", use_container_width=True):
+            if st.button("⏯️ Second Half", width='stretch'):
                 st.session_state.time_interval = 45
                 st.rerun()
         
         with col_btn4:
-            if st.button("⏩ Next Interval", use_container_width=True, disabled=(time_interval >= match_duration - 5)):
+            if st.button("⏩ Next Interval", width='stretch', disabled=(time_interval >= match_duration - 5)):
                 st.session_state.time_interval = min(match_duration - 5, time_interval + 5)
                 st.rerun()
         
