@@ -10,11 +10,18 @@ from metrics.data_processing import (
     count_players,
     safe_json_list,
 )
+import os
+import sys
 
-pipeline: Pipeline = load_model("metrics/weights/xg_pipeline.pkl")
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# print(ROOT_DIR)
+if ROOT_DIR not in sys.path:
+    sys.path.insert(0, ROOT_DIR)
+
+pipeline: Pipeline = load_model(ROOT_DIR + "/metrics/weights/xg_pipeline.pkl")
 
 # Global DB path
-DB_PATH = "statsbomb/statsbomb_euro2020.db"
+DB_PATH = ROOT_DIR + "/statsbomb/statsbomb_euro2020.db"
 
 
 # -----------------------------------

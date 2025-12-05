@@ -1,13 +1,18 @@
 import os
 import sys
-sys.path.append("Streamlit/")
-sys.path.append("metrics/")
-sys.path.append("scripts/")
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
+# print(ROOT_DIR)
 if ROOT_DIR not in sys.path:
     sys.path.insert(0, ROOT_DIR)
+    sys.path.insert(0, ROOT_DIR + "/Streamlit")
+    sys.path.insert(0, ROOT_DIR + "/metrics")
+    sys.path.insert(0, ROOT_DIR + "/scripts")
+
+# sys.path.append("../")
+# sys.path.append("Streamlit/")
+# sys.path.append("metrics/")
+# sys.path.append("scripts/")
 
 import streamlit as st
 import sqlite3
@@ -101,13 +106,13 @@ st.markdown("""
 # ------------------------------
 # 1. Database Connection
 # ------------------------------
-DB_PATH = "statsbomb/statsbomb_euro2020.db"
-FLAGS_PATH = "imgs"
-FIELD_IMAGE_PATH = "imgs/soccer-field.jpg"
-FIELD_TILT_CSV_PATH = "metrics/PPDA_FieldTilt/field_tilt_per_match.csv"
-PPDA_CSV_PATH = "metrics/PPDA_FieldTilt/ppda_per_match.csv"
-FIELD_TILT_AVG_CSV_PATH = "metrics/PPDA_FieldTilt/field_tilt_team_average.csv"
-PPDA_AVG_CSV_PATH = "metrics/PPDA_FieldTilt/ppda_team_average.csv"
+DB_PATH = ROOT_DIR + "/statsbomb/statsbomb_euro2020.db"
+FLAGS_PATH = ROOT_DIR + "/imgs"
+FIELD_IMAGE_PATH = ROOT_DIR + "/imgs/soccer-field.jpg"
+FIELD_TILT_CSV_PATH = ROOT_DIR + "/metrics/PPDA_FieldTilt/field_tilt_per_match.csv"
+PPDA_CSV_PATH = ROOT_DIR + "/metrics/PPDA_FieldTilt/ppda_per_match.csv"
+FIELD_TILT_AVG_CSV_PATH = ROOT_DIR + "/metrics/PPDA_FieldTilt/field_tilt_team_average.csv"
+PPDA_AVG_CSV_PATH = ROOT_DIR + "/metrics/PPDA_FieldTilt/ppda_team_average.csv"
 
 # ------------------------------
 # Country to Flag Mapping
@@ -996,14 +1001,32 @@ elif selected_page == "Match Analysis" and selected_team and selected_match:
         # Initialize session state for slider if not exists
         if 'time_interval' not in st.session_state:
             st.session_state.time_interval = 0
+
+        # working with callbacks because the slider wasn't updating properly
+        def update_slider(val):
+            # time_slider should be in the session state after the first run
+            # sometimes it'll throw a warning but idk what that's about
+            st.session_state.time_slider = val
+            # also updating this session state variable because it's used everywhere
+            st.session_state.time_interval = val
+
+        def reset_callback():
+            st.session_state.time_interval = 0
+            update_slider(0)
+
+        def end_callback():
+            st.session_state.time_interval = match_duration - 5
+            update_slider(match_duration - 5)
         
         # Create columns for controls
         col1, col2, col3 = st.columns([1, 6, 1])
         
-        with col1:
-            if st.button("⏮️ Reset", width='stretch'):
-                st.session_state.time_interval = 0
-                st.rerun()
+        # with col1:
+        #     if st.button("⏮️ Reset", width='stretch'):
+        #         st.session_state.time_interval = 0
+        #         st.rerun()
+        # thank you ferdy @ https://discuss.streamlit.io/t/session-state-variable-not-updating-as-expected/71113/2
+        col1.button("⏮️ Reset", width='stretch', on_click=reset_callback)
         
         with col2:
             # Time interval slider
@@ -1011,21 +1034,24 @@ elif selected_page == "Match Analysis" and selected_team and selected_match:
                 "Select Time Interval (minutes)",
                 min_value=0,
                 max_value=int(match_duration - 5),
-                value=int(st.session_state.time_interval),
+                # value=int(st.session_state.time_interval), # this line was giving warnings after adding callbacks
+                # solution came from https://discuss.streamlit.io/t/why-do-default-values-cause-a-session-state-warning/15485/2
                 step=5,
                 format="%d min",
                 key="time_slider"
             )
             st.session_state.time_interval = time_interval
-        
-        with col3:
-            if st.button("⏭️ End", width='stretch'):
-                st.session_state.time_interval = match_duration - 5
-                st.rerun()
+    
+        # with col3:
+        #     if st.button("⏭️ End", width='stretch'):
+        #         st.session_state.time_interval = match_duration - 5
+        #         print(f"end: {st.session_state.time_interval}")
+        #         st.rerun()
+        col3.button("⏭️ End", width='stretch', on_click=end_callback)
         
         # Display current interval info
-        start_min = time_interval
-        end_min = time_interval + 5
+        start_min = st.session_state.time_interval
+        end_min = st.session_state.time_interval + 5
         
         col_info1, col_info2, col_info3 = st.columns(3)
         with col_info1:
@@ -1033,7 +1059,7 @@ elif selected_page == "Match Analysis" and selected_team and selected_match:
         with col_info2:
             st.metric("Match Duration", f"{match_duration} min")
         with col_info3:
-            progress = ((time_interval + 5) / match_duration) * 100
+            progress = ((st.session_state.time_interval + 5) / match_duration) * 100
             st.metric("Progress", f"{progress:.0f}%")
         
         st.markdown("---")
@@ -1075,3 +1101,11 @@ elif selected_page == "Match Analysis" and selected_team and selected_match:
             - The heatmap shows **combined passes from both teams**
             - Each interval displays **5 minutes** of match action
             """)
+
+    # there was a bug where streamlit would reset to the first tab after clicking a button in the animated heatmap
+    # but only the first time
+    # the workaround is currently
+    if "initial_rerun_done" not in st.session_state:
+        # from https://github.com/streamlit/streamlit/issues/6257#issuecomment-2318141653
+        st.session_state.initial_rerun_done = True
+        st.rerun()
