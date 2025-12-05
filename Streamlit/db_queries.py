@@ -11,10 +11,10 @@ from metrics.data_processing import (
     safe_json_list,
 )
 
-pipeline: Pipeline = load_model("../metrics/weights/xg_pipeline.pkl")
+pipeline: Pipeline = load_model("metrics/weights/xg_pipeline.pkl")
 
 # Global DB path
-DB_PATH = "../statsbomb/statsbomb_euro2020.db"
+DB_PATH = "statsbomb/statsbomb_euro2020.db"
 
 
 # -----------------------------------
