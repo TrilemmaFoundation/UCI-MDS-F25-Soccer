@@ -7,7 +7,11 @@ from db_queries import get_passes_by_interval
 
 
 # Default image path (adjust if needed)
-FIELD_IMAGE_PATH = "../imgs/soccer-field.jpg"
+import os
+
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+FIELD_IMAGE_PATH = ROOT_DIR + "/imgs/soccer-field.jpg"
 
 
 # ------------------------------

@@ -2,10 +2,14 @@ import pandas as pd
 import streamlit as st
 
 # File paths (adjust these relative to where your Streamlit app runs)
-FIELD_TILT_CSV_PATH = "../metrics/PPDA_FieldTilt/field_tilt_per_match.csv"
-PPDA_CSV_PATH = "../metrics/PPDA_FieldTilt/ppda_per_match.csv"
-FIELD_TILT_AVG_CSV_PATH = "../metrics/PPDA_FieldTilt/field_tilt_team_average.csv"
-PPDA_AVG_CSV_PATH = "../metrics/PPDA_FieldTilt/ppda_team_average.csv"
+import os
+
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+FIELD_TILT_CSV_PATH = ROOT_DIR + "/metrics/PPDA_FieldTilt/field_tilt_per_match.csv"
+PPDA_CSV_PATH = ROOT_DIR + "/metrics/PPDA_FieldTilt/ppda_per_match.csv"
+FIELD_TILT_AVG_CSV_PATH = ROOT_DIR + "/metrics/PPDA_FieldTilt/field_tilt_team_average.csv"
+PPDA_AVG_CSV_PATH = ROOT_DIR + "/metrics/PPDA_FieldTilt/ppda_team_average.csv"
 
 
 @st.cache_data
