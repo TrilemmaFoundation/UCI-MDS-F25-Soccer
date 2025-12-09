@@ -75,7 +75,7 @@ We are all Master of Data Science students at the University of California, Irvi
 **About Me:** I like to exercise and go on walks with my dogs.  
 **LinkedIn:** <https://www.linkedin.com/in/bryantorres-okok/>
 
-**Name:** Yue Xu
+**Name:** Yue Xu  
 **Undergraduate Experience:** Information System @ NUAA  
 **About Me:** I like to watch movies and play games.  
 **LinkedIn:** <https://www.linkedin.com/in/yuexu4541/>
