@@ -841,7 +841,14 @@ elif selected_page == "Team Analysis" and selected_team:
                                     )
                             
                             st.markdown("---")
-
+    
+    # there was a bug where streamlit would reset to the first tab after clicking a button in the animated heatmap
+    # but only the first time
+    # the workaround is currently
+    if "match_init_done" not in st.session_state:
+        # from https://github.com/streamlit/streamlit/issues/6257#issuecomment-2318141653
+        st.session_state.match_init_done = True
+        st.rerun()
 # ------------------------------
 # 3C. Match Analysis
 # ------------------------------
