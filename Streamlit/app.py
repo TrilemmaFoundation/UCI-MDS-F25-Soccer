@@ -1,3 +1,4 @@
+import ast
 import os
 import sys
 
@@ -53,6 +54,31 @@ from heatmaps import (
 )
 
 from charts import plot_interactive_shot_map
+
+xt_grid = np.load(ROOT_DIR + "/metrics/xt_grid.npy")  # shape (12, 8)
+N_X, N_Y = xt_grid.shape
+
+PITCH_X, PITCH_Y = 120, 80
+
+
+def get_xt_value(x: float, y: float) -> float:
+    nx = min(int(x / 10), 11)
+    ny = min(int(y / 10), 7)
+    return xt_grid[nx, ny]
+
+
+def compute_event_xt(loc, end_loc):
+    """Return xT contribution for one event."""
+    try:
+        x1, y1 = ast.literal_eval(loc)
+        x2, y2 = ast.literal_eval(end_loc)
+    except Exception:
+        return 0.0
+
+    start_xt = get_xt_value(x1, y1)
+    end_xt = get_xt_value(x2, y2)
+    return end_xt - start_xt
+
 
 # ------------------------------
 # Page Configuration
@@ -581,8 +607,33 @@ elif selected_page == "Team Analysis" and selected_team:
             """
             
             df_players = pd.read_sql_query(query_players, conn)
+            query_xt_events = f"""
+                SELECT player, type, location, CASE 
+                    WHEN type = 'Pass' THEN pass_end_location
+                    WHEN type = 'Carry' THEN carry_end_location
+                    ELSE NULL
+                END AS end_location
+                FROM events
+                WHERE match_id IN ({match_ids_str})
+                AND team = '{selected_team}'
+                AND player IS NOT NULL
+                AND type IN ('Pass', 'Carry');
+            """
+
+            df_xt = pd.read_sql_query(query_xt_events, conn)
             conn.close()
             
+            df_xt["xT"] = df_xt.apply(
+                lambda row: compute_event_xt(row["location"], row["end_location"]),
+                axis=1,
+            )
+
+            df_xt_player = df_xt.groupby("player", as_index=False)["xT"].sum()
+            df_xt_player.rename(columns={"xT": "total_xT"}, inplace=True)
+
+            df_players = df_players.merge(df_xt_player, on="player", how="left")
+            df_players["total_xT"] = df_players["total_xT"].fillna(0)
+                        
             if not df_players.empty:
                 player_tab1, player_tab2 = st.tabs(["Full Statistics", "Top Performers"])
                 
@@ -590,7 +641,7 @@ elif selected_page == "Team Analysis" and selected_team:
                     st.dataframe(df_players, width='stretch', hide_index=True)
                 
                 with player_tab2:
-                    col1, col2, col3, col4 = st.columns(4)
+                    col1, col2, col3, col4, col5 = st.columns(5)
                     
                     with col1:
                         st.markdown("#### Top Scorers")
@@ -625,6 +676,15 @@ elif selected_page == "Team Analysis" and selected_team:
                         else:
                             st.write("No duel data available")
     
+                    with col5:
+                        st.markdown("#### Most xT Contribution")
+                        top_xts = df_players.nlargest(5, 'total_xT')[['player', 'total_xT']]
+                        if not top_xts.empty and top_xts['total_xT'].sum() > 0:
+                            for _, row in top_xts.iterrows():
+                                if row['total_xT'] > 0:
+                                    st.write(f"**{row['player']}**: {row['total_xT']:.2f}")
+                        else:
+                            st.write("No xT data available")
     with tab2:
         # Team Comparisons
         st.markdown("## Team Performance Comparisons")
